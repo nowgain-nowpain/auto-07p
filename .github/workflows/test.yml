@@ -7,42 +7,80 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-20.04]
+        os: [ubuntu-22.04, ubuntu-24.04, macos-13]
     steps:
     - uses: actions/checkout@v1
-    - name: Install dependencies
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install gfortran libmotif-dev
+        sudo apt-get install gfortran libmotif-dev libsoqt520-dev
         sudo apt-get install python3-matplotlib
         sudo apt-get install openmpi-bin libopenmpi-dev
         sudo apt-get install texlive texlive-latex-extra transfig
-    - name: Install packages for Ubuntu 18.04 only
-      if: matrix.os == 'ubuntu-18.04'
-      run: sudo apt-get install libsoqt4-dev python-matplotlib
-    - name: Install packages for Ubuntu 20.04 only
-      if: matrix.os == 'ubuntu-20.04'
-      run: sudo apt-get install libsoqt520-dev python-tk python-numpy
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew update
+        brew reinstall gfortran
+        # workaround for brew link failure
+        rm -f /usr/local/bin/{2to3-,idle,pydoc,python,pip}3*
+        rm -f /usr/local/bin/python3*-config /usr/local/bin/2to3
+        brew install cmake qt openmotif open-mpi coin3d
+        curl -O -L https://github.com/coin3d/soqt/releases/download/v1.6.3/soqt-1.6.3-src.tar.gz
+        tar xf soqt-1.6.3-src.tar.gz
+        cd soqt/build
+        cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
+        make -j3
+        sudo make install
+        brew install basictex fig2dev
+        brew install python-tk
+        brew install python-matplotlib
+        brew install pyenv
+        pyenv install 2.7.18
+        pyenv global 2.7.18
+        PATH=$(pyenv root)/shims:$PATH
+        pip install numpy==1.16.6
+        # workaround for freetype compilation error
+        brew unlink freetype
+        curl -L https://raw.githubusercontent.com/Homebrew/homebrew-core/d28afc3bfdb5d24eab02157bfffcc9e17ed6666c/Formula/f/freetype.rb > freetype.rb
+        brew install freetype.rb
+        pip install matplotlib
+    - name: Install packages for Ubuntu 22.04 only
+      if: matrix.os == 'ubuntu-22.04'
+      run: |
+        sudo apt-get install python-tk
+        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+        sudo python2 get-pip.py
+        pip2 install numpy
     - name: Compile
       run: |
         # compile auto
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          eval "$(/usr/libexec/path_helper)"
+        fi
         ./configure --enable-gui --with-mpi
         make
         # compile manual
         make -C doc auto.pdf ../plaut04/doc/userguide.pdf
+        touch test/python2log.txt
     - name: Run test (python2)
+      if: matrix.os != 'ubuntu-24.04'
       run: |
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          PATH=$(pyenv root)/shims:$PATH
+        fi
         export OMPI_MCA_btl="^openib"
         cd test
         python2 ../python/auto all.auto
         mv *_log07p python2log.txt
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
-        name: python2log
+        name: python2log-${{ matrix.os }}
         path: test/python2log.txt
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
-        name: python2verification
+        name: python2verification-${{ matrix.os }}
         path: test/verification
     - name: Run test (python3)
       run: |
@@ -50,27 +88,31 @@ jobs:
         cd test
         python3 ../python/auto all.auto
         mv *_log07p python3log.txt
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
-        name: python3log
+        name: python3log-${{ matrix.os }}
         path: test/python3log.txt
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
-        name: python3verification
+        name: python3verification-${{ matrix.os }}
         path: test/verification
     - name: Run test (MPI + python3)
       run: |
-        export AUTO_COMMAND_PREFIX="mpirun -n 2"
-        export OMP_NUM_THREADS=1
-        export OMPI_MCA_btl="^openib"
-        cd test
-        python3 ../python/auto all.auto
-        mv *_log07p python3mpilog.txt
-    - uses: actions/upload-artifact@v1
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          touch test/python3mpilog.txt
+        else
+          export AUTO_COMMAND_PREFIX="mpirun -n 2"
+          export OMP_NUM_THREADS=1
+          export OMPI_MCA_btl="^openib"
+          cd test
+          python3 ../python/auto all.auto
+          mv *_log07p python3mpilog.txt
+        fi
+    - uses: actions/upload-artifact@v4
       with:
-        name: python3mpilog
+        name: python3mpilog-${{ matrix.os }}
         path: test/python3mpilog.txt
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
-        name: python3mpiverification
+        name: python3mpiverification-${{ matrix.os }}
         path: test/verification

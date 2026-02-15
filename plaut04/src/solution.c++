@@ -1,10 +1,15 @@
 #include "solution.h"
 
+#include <sstream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <ctype.h>
 #include <math.h>
+
+#ifdef DEBUG
+#include <iostream>
+#endif
 
 #include "gplaut04.h"
 #include "createCoords.h"
@@ -1837,7 +1842,7 @@ bool Solution::parse( const char* sFileName )
 //
 // READ solution (orbits) to the array
 //
-bool Solution::read(const char* sFileName, int varIndices[])
+bool Solution::read(const char* sFileName)
 //
 ///////////////////////////////////////////////////////////////////////
 
@@ -1913,9 +1918,8 @@ bool Solution::read(const char* sFileName, int varIndices[])
             orbitCounter++;
         }
 
-        while(fgetc(inFile)!='\n');
-        {
-            {
+        while(fgetc(inFile)!='\n') {}
+
                 for(i=0; i<ntpl; ++i)
                 {
                     ++(totalNumPoints_);
@@ -1966,8 +1970,7 @@ bool Solution::read(const char* sFileName, int varIndices[])
                         }
                     }
                 }
-            }
-        }
+
         if( ntpl != 0) 
             counter++;
     }
@@ -2027,9 +2030,9 @@ Solution::normalizeData()
     int np = numOrbits_;
 
 #ifdef DEBUG
-    cout <<" Max sol 0 :" <<max_[0]<<" Min "<<min_[0]<<endl;
-    cout <<" Max sol 1 :" <<max_[1]<<" Min "<<min_[1]<<endl;
-    cout <<" Max sol 2 :" <<max_[2]<<" Min "<<min_[2]<<endl;
+    std::cout <<" Max sol 0 :" <<max_[0]<<" Min "<<min_[0]<<std::endl;
+    std::cout <<" Max sol 1 :" <<max_[1]<<" Min "<<min_[1]<<std::endl;
+    std::cout <<" Max sol 2 :" <<max_[2]<<" Min "<<min_[2]<<std::endl;
 #endif
     double div[3], con[3];
     for(int k=0; k<3; k++)
@@ -2170,7 +2173,7 @@ Solution::dealloc()
 SoSeparator *
 Solution::animateOrbitInertialSysUsingLine(int iBranch,  int iOrbit,
 float (*vertices)[3], float (*largePrimPos)[3], float (*smallPrimPos)[3],
-float * myColorBase, float period, int size,
+float * myColorBase, int size,
 float scaler, int stability, int type)
 //
 ///////////////////////////////////////////////////////////////////////////
@@ -2662,7 +2665,7 @@ Solution::createInertialFrameScene(float dis)
             {
                 solGroup->addChild(animateOrbitInertialSysUsingLine(
                     iBranch,  kno,  myVertices, largePrimPos, smallPrimPos, myColorBase,
-                    satPeriod, arrSize, lineWidthScaler, stability, type));
+                    arrSize, lineWidthScaler, stability, type));
             }
             else
             {
@@ -2727,12 +2730,13 @@ Solution::createInertialFrameScene(float dis)
             pos1 = 0, pos2= 1;
         else if(whichCoordSystem == INERTIAL_E )
             pos1 = -1, pos2= 0;
-        char *txtureFileName = new char [strlen(autoDir) + 30];
-        sprintf(txtureFileName, "%s%s", autoDir, "/plaut04/widgets/large.rgb");
-        aSep->addChild(createPrimary(1-mass, pos1, 0.25*largePrimRadius, txtureFileName));
-        sprintf(txtureFileName, "%s%s", autoDir, "/plaut04/widgets/small.rgb");
-        aSep->addChild(createPrimary(mass, pos2, 0.25*smallPrimRadius, txtureFileName));
-        delete [] txtureFileName;
+        std::ostringstream txtureFileName;
+        txtureFileName << autoDir << "/plaut04/widgets/large.jpg";
+        aSep->addChild(createPrimary(1-mass, pos1, 0.25*largePrimRadius, txtureFileName.str().c_str()));
+        txtureFileName.str("");
+        txtureFileName.clear();
+        txtureFileName << autoDir << "/plaut04/widgets/small.jpg";
+        aSep->addChild(createPrimary(mass, pos2, 0.25*smallPrimRadius, txtureFileName.str().c_str()));
     }
 
 // create the libration points

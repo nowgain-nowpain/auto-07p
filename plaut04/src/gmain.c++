@@ -133,7 +133,7 @@ static SoSeparator * createStarryBackground(int total,float diameter);
 
 static SoSeparator * addLegend();
 
-static SoSeparator * drawStarryBackground(char * bgFileName);
+static SoSeparator * drawStarryBackground(const char * bgFileName);
 
 static int readResourceParameters(const char *dir);
 
@@ -220,9 +220,9 @@ showHelpDialog()
 //
 ////////////////////////////////////////////////////////////////////////
 {
-    char *command = new char [strlen(autoDir) + 50];
-    sprintf(command, "%s%s", autoDir, "/plaut04/doc/userguide.pdf");
-    if (access(command, R_OK) != 0)
+    std::ostringstream command;
+    command << autoDir << "/plaut04/doc/userguide.pdf";
+    if (access(command.str().c_str(), R_OK) != 0)
     {
         system("xmessage 'Sorry, could not find "
             "userguide.pdf' > /dev/null");
@@ -237,9 +237,10 @@ showHelpDialog()
         return;
     }
 
-    sprintf(command, "%s%s%s", "xpdf ",autoDir,"/plaut04/doc/userguide.pdf &");
-    system(command);
-    delete [] command;
+    command.str("");
+    command.clear();
+    command << "xpdf " << autoDir << "/plaut04/doc/userguide.pdf &";
+    system(command.str().c_str());
 }
 
 
@@ -308,10 +309,9 @@ updateScene()
     // create starry background
     if(options[OPT_BACKGROUND])
     {
-        char *bgFileName = new char [strlen(autoDir) + 34];
-        sprintf(bgFileName, "%s%s",autoDir, "/plaut04/widgets/background.jpg");
-        newScene->addChild(drawStarryBackground(bgFileName));
-        delete [] bgFileName;
+        std::ostringstream bgFileName;
+        bgFileName << autoDir << "/plaut04/widgets/background.jpg";
+        newScene->addChild(drawStarryBackground(bgFileName.str().c_str()));
     }
 
     // add legend
@@ -344,7 +344,7 @@ updateScene()
 ////////////////////////////////////////////////////////////////////////
 //
 SoSeparator *
-drawStarryBackground(char * bgFileName)
+drawStarryBackground(const char * bgFileName)
 //
 ////////////////////////////////////////////////////////////////////////
 {
@@ -954,11 +954,9 @@ readSolutionAndBifurcationData(bool blFirstRead,
     clientData.labelIndex = new long int[std::max(myBifNode->totalLabels(),
                                                   mySolNode->totalLabels())][4];
 
-    int varIndices[3];
-
     if( blOpenBifFile)
     {
-        if (!myBifNode->read(bFileName.c_str(), varIndices))
+        if (!myBifNode->read(bFileName.c_str()))
             printf(" Failed to read the bifurcation file!\n");
     }
     else
@@ -968,7 +966,7 @@ readSolutionAndBifurcationData(bool blFirstRead,
 
     if( mySolNode->numOrbits() > 0 )
     {
-        blOpenSolFile = mySolNode->read(sFileName.c_str(), varIndices);
+        blOpenSolFile = mySolNode->read(sFileName.c_str());
         if(!blOpenSolFile)
             printf(" Failed to read the solution file!\n");
         else if(myBifNode->totalLabels() != 0 &&
@@ -2366,6 +2364,7 @@ writePreferValuesToFile()
                 fprintf(outFile, "\n# Set the initial, maximum and minimum animation speed:\n");
                 fprintf(outFile, "%-25.25s = ", intVariableNames[i]);
                 fprintf(outFile, "%i\n", (int)floor(satSpeed*100+0.5));
+                break;
             case 10:
                 fprintf(outFile, "%-25.25s = ", intVariableNames[i]);
                 fprintf(outFile, "%i\n", MAX_SAT_SPEED);
@@ -2378,6 +2377,7 @@ writePreferValuesToFile()
                 fprintf(outFile, "\n# Set the initial, maximum and minimum highlighting animation speed:\n"); 
                 fprintf(outFile, "%-25.25s = ", intVariableNames[i]);
                 fprintf(outFile, "%i\n", (int)floor(orbitSpeed*50+0.5));
+                break;
             case 13:
                 fprintf(outFile, "%-25.25s = ", intVariableNames[i]);
                 fprintf(outFile, "%i\n", MAX_ORBIT_SPEED);
@@ -2534,7 +2534,7 @@ writePreferValuesToFile()
                 break;
             case 7 :
                 fprintf(outFile,"\n# sat, large prim, large prim line, small prim, small prim line\n");
-                /* fall though */
+                /* fall through */
             case 8 :
             case 9 :
             case 10 :

@@ -205,7 +205,10 @@ def us(name,templates=None):
         info("Conversion done : converted file saved as %s\n"%sfile)
     files = glob.glob("fcon*") + ["fort.2", "fort.3"]
     for f in files:
-        os.remove(f)
+        try:
+            os.remove(f)
+        except OSError:
+            pass
 commandUserData = command(us,alias=['userdata'])
 
 
@@ -1767,6 +1770,8 @@ try:
         """
 
         options = kw
+        if AUTOutil.is_notebook():
+            options['hide'] = True
         if type(name) == type("") or name is None:
             name = filenameTemplate(name,templates)
             parsed = None

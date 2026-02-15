@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 import matplotlib
-matplotlib.use('TkAgg')
-
+from auto import AUTOutil
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 try: #MPL 2.2 wants NavigationToolbar2Tk instead
     from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk as NavigationToolbar2TkAgg
 except ImportError:
     from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
+
+if not AUTOutil.is_notebook():
+    matplotlib.use('TkAgg')
+    from matplotlib.figure import Figure
+else:
+    from matplotlib.pyplot import figure as Figure
+
 from matplotlib.lines import Line2D
 from matplotlib.axes import Axes
 from matplotlib.ticker import AutoLocator, FixedLocator
@@ -81,6 +86,10 @@ class FigureCanvasTkAggRedraw(FigureCanvasTkAgg):
         else:
             [d["minx"],d["maxx"]] = ax.get_xlim()
             [d["miny"],d["maxy"]] = ax.get_ylim()
+        fig = ax.get_figure()
+        dpi = fig.get_dpi()
+        d["realwidth"] = fig.get_figwidth()*dpi
+        d["realheight"] = fig.get_figheight()*dpi
         for k in list(d):
             # don't adjust any unchanged settings
             if k == "cur_lims":
@@ -97,13 +106,10 @@ class FigureCanvasTkAggRedraw(FigureCanvasTkAgg):
             return
         FigureCanvasTkAgg.draw(self)
 
+    # MPL 2.2+ always calls draw() and never show() (deprecated)
+    # Older MPLs call one or the other.
     def show(self):
-        fig = self.grapher.ax.get_figure() 
-        dpi = fig.get_dpi()
-        self.grapher._configNoDraw(
-            realwidth=fig.get_figwidth()*dpi,
-            realheight=fig.get_figheight()*dpi)
-        self.redraw()
+        self.draw()
 
 class BasicGrapher(grapher.BasicGrapher):
     """Documentation string for Basic Grapher
@@ -115,7 +121,10 @@ class BasicGrapher(grapher.BasicGrapher):
         self.ax2d = self.ax
         self.ax3d = None
         if kw.get("hide"):
-            self.canvas = FigureCanvasAgg(self.ax.get_figure())
+            if AUTOutil.is_notebook():
+                self.canvas = self.ax.get_figure().canvas
+            else:
+                self.canvas = FigureCanvasAgg(self.ax.get_figure())
         else:
             self.canvas = FigureCanvasTkAggRedraw(self,parent)
             tk_widget = self.canvas.get_tk_widget()
@@ -313,10 +322,16 @@ class BasicGrapher(grapher.BasicGrapher):
                 elif key == "yticks":
                     self.ax.set_yticks(ticks)
 
+    def removeData(self, name, item):
+        if hasattr(item, "remove"):
+            item.remove()
+        else:
+            getattr(self.ax, name).remove(item)
+
     def _delAllData(self):
         for d in self.data:
             if "mpline" in d:
-                self.ax.lines.remove(d["mpline"])
+                self.removeData("lines", d["mpline"])
         self.data=[]
 
         # set type for next data
@@ -369,7 +384,7 @@ class BasicGrapher(grapher.BasicGrapher):
 
     def _delData(self,index):
         if "mpline" in data[index]:
-            self.ax.lines.remove(data[index]["mpline"])
+            self.removeData("lines", data[index]["mpline"])
         del self.data[index]
 
     def clear(self):
@@ -447,13 +462,13 @@ class LabeledGrapher(BasicGrapher,grapher.LabeledGrapher):
         for l in self.labels:
             for label in l:
                 if "mpline" in label:
-                    self.ax.lines.remove(label["mpline"])
+                    self.removeData("lines", label["mpline"])
                 if "mptext" in label:
-                    self.ax.texts.remove(label["mptext"])
+                    self.removeData("texts", label["mptext"])
                 if "mpsymline" in label:
-                    self.ax.lines.remove(label["mpsymline"])
+                    self.removeData("lines", label["mpsymline"])
                 if "mpsymtext" in label:
-                    self.ax.texts.remove(label["mpsymtext"])
+                    self.removeData("texts", label["mpsymtext"])
         self.labels=[]
         BasicGrapher._delAllData(self)
 
@@ -469,10 +484,10 @@ class LabeledGrapher(BasicGrapher,grapher.LabeledGrapher):
         for labels in self.labels:
             for label in labels:
                 if "mpline" in label:
-                    self.ax.lines.remove(label["mpline"])
+                    self.removeData("lines", label["mpline"])
                     del label["mpline"]
                 if "mptext" in label:
-                    self.ax.texts.remove(label["mptext"])
+                    self.removeData("texts", label["mptext"])
                     del label["mptext"]
 
         if not self.cget("use_labels"):
@@ -581,10 +596,10 @@ class LabeledGrapher(BasicGrapher,grapher.LabeledGrapher):
                 if l is None:
                     continue
                 if "mpsymline" in label:
-                    self.ax.lines.remove(label["mpsymline"])
+                    self.removeData("lines", label["mpsymline"])
                     del label["mpsymline"]
                 if "mpsymtext" in label:
-                    self.ax.texts.remove(label["mpsymtext"])
+                    self.removeData("texts", label["mpsymtext"])
                     del label["mpsymtext"]
                 if not self.cget("use_symbols"):
                     continue

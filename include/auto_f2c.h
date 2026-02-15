@@ -7,7 +7,6 @@
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 
-#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -42,10 +41,6 @@ typedef integer logical;
 #define ARRAY2D(array,i,j) array[(i) + (j) * array ## _dim1]
 #define ARRAY3D(array,i,j,k) array[(i) + ((j)  + (k) * array ## _dim2) * array ## _dim1]
 
-#ifdef FC_FUNC
-#define blhom_1 FC_FUNC(blhom,BLHOM)
-#endif
-
 /* problem defined functions*/
 typedef int user_func_t(integer ndim, const doublereal *u, const integer *icp,
 	 const doublereal *par, integer ijac, 
@@ -75,27 +70,26 @@ typedef struct {
 } user_function_list;
 extern const user_function_list user;
 
-#ifdef FC_FUNC
-extern doublereal FC_FUNC(getp,GETP)(const char *code, integer *ic, 
-				     const doublereal *u);
-/* C wrapper for getp; call it getp_ if we have name clashes */
-#define name 1
-#if FC_FUNC(name,NAME) == 1
-#define getp getp_
-#endif
-#undef name
-#endif
+#define getp getp_c
 extern doublereal getp(const char *code, integer ic, const doublereal *u);
 
-#ifndef WRAPPER
 /* user functions */
-static int func();
-static int stpnt();
-static int bcnd();
-static int icnd();
-static int fopt();
-static int pvls();
+static int func(integer ndim, const doublereal *u, const integer *icp,
+	 const doublereal *par, integer ijac,
+	 doublereal *f, doublereal *dfdu, doublereal *dfdp);
+static int stpnt(integer ndim, doublereal t,
+	  doublereal *u, doublereal *par);
+static int bcnd(integer ndim, const doublereal *par, const integer *icp, integer nbc,
+	 const doublereal *u0, const doublereal *u1, integer ijac,
+	 doublereal *f, doublereal *dbc);
+static int icnd(integer ndim, const doublereal *par, const integer *icp, integer nint,
+	 const doublereal *u, const doublereal *uold, const doublereal *udot,
+	 const doublereal *upold, integer ijac,
+	 doublereal *fi, doublereal *dint);
+static int fopt(integer ndim, const doublereal *u, const integer *icp,
+	 const doublereal *par, integer ijac,
+	 doublereal *fs, doublereal *dfdu, doublereal *dfdp);
+static int pvls(integer ndim, const doublereal *u, doublereal *par);
 const user_function_list user = { func, stpnt, bcnd, icnd, fopt, pvls };
-#endif
 
 #endif

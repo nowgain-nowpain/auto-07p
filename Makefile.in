@@ -5,9 +5,18 @@
 #   Redone by Randy C. Paffenroth 1999 for use with a configure script and python
 #   front end.
 SHELL=/bin/sh
+INSTALL=@INSTALL@
+INSTALL_DATA=@INSTALL_DATA@
+INSTALL_PROGRAM=@INSTALL_PROGRAM@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+libdir=@libdir@
+autodir=@libdir@/auto-07p
+PERL=@PERL@
 @SET_MAKE@
 #
-all: src cmds util @GUI@ @PLAUT@ @PLAUT04@ @TEK2PS@
+all: src cmds util @GUI@ @PLAUT@ @PLAUT04@
 cmd: src cmds util @PLAUT@
 
 src: .FORCE
@@ -33,15 +42,11 @@ plaut: .FORCE
 plaut04: .FORCE
 	cd ./plaut04;$(MAKE)
 
-tek2ps: .FORCE
-	cd ./tek2ps;$(MAKE)
-
 #
 clean:
 	cd ./gui;$(MAKE) clean
 	cd ./plaut;$(MAKE) clean
 	cd ./plaut04;$(MAKE) clean
-	cd ./tek2ps;$(MAKE) clean
 	cd ./doc;$(MAKE) clean
 #
 superclean:  clean
@@ -58,9 +63,57 @@ superclean:  clean
 	rm -f python/*.pyc python/graphics/*.pyc
 	rm -f test/*.pyc test/*_log07p* test/verification/*.html
 	rm -f Makefile cmds/Makefile gui/Makefile plaut/Makefile src/Makefile \
-	  tek2ps/Makefile gui/auto.makefile include/config.h cmds/cmds.make \
-	  cmds/compat.sh util/Makefile
+	  gui/auto.makefile include/config.h cmds/cmds.make \
+	  util/Makefile
 	@echo "Super cleaning ... done"
+#
+distclean:  superclean
+
+install: all
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) bin/auto $(DESTDIR)$(bindir)/auto
+	$(INSTALL) bin/autox $(DESTDIR)$(bindir)/autox
+	$(PERL) -i -pe's@AUTO_DIR=.*@AUTO_DIR=$(autodir)@' $(DESTDIR)$(bindir)/auto $(DESTDIR)$(bindir)/autox
+	$(INSTALL) -d $(DESTDIR)$(autodir)/python/auto/graphics
+	$(INSTALL_DATA) .autorc $(DESTDIR)$(autodir)
+	$(INSTALL_DATA) python/auto/*.py $(DESTDIR)$(autodir)/python/auto/
+	$(INSTALL_DATA) python/auto/graphics/*.py $(DESTDIR)/$(autodir)/python/auto/graphics/
+	$(INSTALL) -d $(DESTDIR)$(autodir)/include $(DESTDIR)$(autodir)/cmds
+	$(INSTALL) -d $(DESTDIR)$(autodir)/lib $(DESTDIR)$(autodir)/bin
+	$(INSTALL_DATA) include/auto_f2c.h $(DESTDIR)$(autodir)/include
+	cd bin && $(INSTALL) autlab deletelp double keepbp keeplp keepsp keepuz listlabels plaut plaut04 reduce relabel triple $(DESTDIR)$(libdir)/auto-07p/bin
+	$(INSTALL) cmds/@* $(DESTDIR)$(libdir)/auto-07p/cmds
+	$(INSTALL_DATA) cmds/[a-zA-Z]* $(DESTDIR)$(autodir)/cmds
+	$(PERL) -i -pe's@(AUTO_DIR[ =]).*@\1$(autodir)@' $(DESTDIR)$(autodir)/cmds/auto.env $(DESTDIR)$(autodir)/cmds/auto.env.sh
+	$(INSTALL_PROGRAM) -m 644 lib/* $(DESTDIR)$(autodir)/lib/
+	$(INSTALL) -d $(DESTDIR)$(autodir)/doc
+	if [ -f doc/auto.pdf ]; then \
+		$(INSTALL_DATA) doc/auto.pdf $(DESTDIR)$(autodir)/doc; \
+	fi
+	$(INSTALL) -d $(DESTDIR)$(autodir)/plaut04/doc $(DESTDIR)$(autodir)/plaut04/widgets
+	if [ -f plaut04/doc/userguide.pdf ]; then \
+		$(INSTALL_DATA) plaut04/doc/userguide.pdf $(DESTDIR)$(autodir)/plaut04/doc; \
+	fi
+	$(INSTALL_DATA) plaut04/*.rc $(DESTDIR)$(autodir)/plaut04
+	$(INSTALL_DATA) plaut04/widgets/* $(DESTDIR)$(autodir)/plaut04/widgets
+	$(INSTALL) -d $(DESTDIR)$(autodir)/demos
+	for d in demos/*; do \
+		$(INSTALL) -d $(DESTDIR)$(autodir)/$$d; \
+		for f in $$d/*; do \
+			if [ -d $$f ]; then \
+				$(INSTALL) -d $(DESTDIR)$(autodir)/$$f; \
+				$(INSTALL_DATA) $$f/* $(DESTDIR)$(autodir)/$$f; \
+			else \
+				$(INSTALL_DATA) $$f $(DESTDIR)$(autodir)/$$d; \
+			fi; \
+		done; \
+	done
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+
+check:
+	cd test && unset DISPLAY && OMP_NUM_THREADS=2 python ../python/auto all.auto
 
 .FORCE:
 

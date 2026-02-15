@@ -291,7 +291,7 @@ CONTAINS
 
     TYPE(AUTOPARAMETERS), INTENT(IN) :: AP
     INTEGER, INTENT(IN) :: ICP(*),NDIM,NINT,IJAC
-    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM),UDOT(NDIM),UPOLD(NDIM)
+    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM+AP%NFPR),UDOT(NDIM),UPOLD(NDIM)
     DOUBLE PRECISION, INTENT(INOUT) :: U(NDIM),PAR(*)
     DOUBLE PRECISION, INTENT(OUT) :: F(NINT)
     DOUBLE PRECISION, INTENT(INOUT) :: DINT(NINT,*)
@@ -587,7 +587,7 @@ CONTAINS
 
     TYPE(AUTOPARAMETERS), INTENT(IN) :: AP
     INTEGER, INTENT(IN) :: ICP(*),NDIM,NINT,IJAC
-    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM),UDOT(NDIM),UPOLD(NDIM)
+    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM+AP%NFPR),UDOT(NDIM),UPOLD(NDIM)
     DOUBLE PRECISION, INTENT(INOUT) :: U(NDIM),PAR(*)
     DOUBLE PRECISION, INTENT(OUT) :: F(NINT)
     DOUBLE PRECISION, INTENT(INOUT) :: DINT(NINT,*)
@@ -963,7 +963,7 @@ CONTAINS
 
     TYPE(AUTOPARAMETERS), INTENT(IN) :: AP
     INTEGER, INTENT(IN) :: ICP(*),NDIM,NINT,IJAC
-    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM),UDOT(NDIM),UPOLD(NDIM)
+    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM+AP%NFPR),UDOT(NDIM),UPOLD(NDIM)
     DOUBLE PRECISION, INTENT(INOUT) :: U(NDIM),PAR(*)
     DOUBLE PRECISION, INTENT(OUT) :: FI(NINT)
     DOUBLE PRECISION, INTENT(INOUT) :: DINT(NINT,*)
@@ -1419,7 +1419,7 @@ CONTAINS
 
     TYPE(AUTOPARAMETERS), INTENT(IN) :: AP
     INTEGER, INTENT(IN) :: ICP(*),NDIM,NINT,IJAC
-    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM),UDOT(NDIM),UPOLD(NDIM)
+    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM+AP%NFPR),UDOT(NDIM),UPOLD(NDIM)
     DOUBLE PRECISION, INTENT(INOUT) :: U(NDIM),PAR(*)
     DOUBLE PRECISION, INTENT(OUT) :: F(NINT)
     DOUBLE PRECISION, INTENT(INOUT) :: DINT(NINT,*)
@@ -1682,7 +1682,7 @@ CONTAINS
 
     TYPE(AUTOPARAMETERS), INTENT(IN) :: AP
     INTEGER, INTENT(IN) :: ICP(*),NDIM,NINT,IJAC
-    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM),UDOT(NDIM),UPOLD(NDIM)
+    DOUBLE PRECISION, INTENT(IN) :: UOLD(NDIM+AP%NFPR),UDOT(NDIM),UPOLD(NDIM)
     DOUBLE PRECISION, INTENT(INOUT) :: U(NDIM),PAR(*)
     DOUBLE PRECISION, INTENT(OUT) :: F(NINT)
     DOUBLE PRECISION, INTENT(INOUT) :: DINT(NINT,*)
@@ -1798,34 +1798,41 @@ CONTAINS
     INTEGER, INTENT(IN) :: ITEST
     CHARACTER(LEN=*), INTENT(OUT) :: ATYPE
 
-    Q=FNCSBV(AP,ICP,UPS,NDIM,PAR,ITEST,ATYPE)
-    IF(ITEST==3)THEN
-        Q=FNSPBV(AP,PAR,ATYPE,P0,P1,EV)
-    ENDIF
+    SELECT CASE(ITEST)
+    CASE(0)
+       IF(ALLOCATED(P0))THEN
+          ! compute Floquet multipliers before calling PVLS
+          CALL PVSPBV(AP,PAR,P0,P1,EV)
+       ENDIF
+       Q=FNCSBV(AP,ICP,UPS,NDIM,PAR,ITEST,ATYPE)
+    CASE(1:2)
+       Q=FNCSBV(AP,ICP,UPS,NDIM,PAR,ITEST,ATYPE)
+    CASE(3)
+       Q=FNSPBV(AP,PAR,ATYPE,EV)
+    END SELECT
   END FUNCTION FNCSPS
 
-! ------ --------- -------- ------
-  DOUBLE PRECISION FUNCTION FNSPBV(AP,PAR,ATYPE,P0,P1,EV)
+! ---------- ------
+  SUBROUTINE PVSPBV(AP,PAR,P0,P1,EV)
 
     USE FLOQUET
     USE SUPPORT, ONLY: PI, LBTYPE, CHECKSP, NULLVC
 
-! This function returns a quantity that changes sign when a complex
-! pair of eigenvalues of the linearized Poincare map moves in or out
-! of the unit circle or when a real eigenvalues passes through -1.
+! This subroutine determines and prints Floquet multipliers and
+! stability, which can then be used by PVLS
 
     TYPE(AUTOPARAMETERS), INTENT(INOUT) :: AP
     DOUBLE PRECISION, INTENT(INOUT) :: PAR(*)
-    CHARACTER(LEN=*), INTENT(OUT) :: ATYPE
     DOUBLE PRECISION, INTENT(IN) :: P0(AP%NDIM,*),P1(AP%NDIM,*)
     COMPLEX(KIND(1.0D0)), INTENT(INOUT) :: EV(*)
 
 ! Local
     COMPLEX(KIND(1.0D0)) ZINS,ZTMP
-    INTEGER ISP,ISW,IID,IBR,NTOT,NTOP,I,J,L,LOC,NINS,NINS1,NDIM,NDM,ITMP,SKIP
+    INTEGER ISP,ISW,IID,IBR,NTOT,NTOP,I,J,L,LOC,NINS,NDIM,NDM,ITMP,SKIP
     DOUBLE PRECISION D,AMIN,AZM1,AZINS,tol,V,THETA
     DOUBLE PRECISION, ALLOCATABLE :: Q0(:,:),Q1(:,:),U(:)
     INTEGER, ALLOCATABLE :: IC(:),IR(:),IRPIV(:)
+    CHARACTER(LEN=4) :: ATYPE
 
     NDIM=AP%NDIM
     NDM=AP%NDM
@@ -1838,10 +1845,8 @@ CONTAINS
 
 ! Initialize.
 
-    FNSPBV=0.d0
-    AP%SPBF=FNSPBV
+    AP%SPBF=0.d0
     D=0.d0
-    ATYPE=''
 
     IF(ISP==0)RETURN
 
@@ -1922,13 +1927,15 @@ CONTAINS
           ! For PD: Find the multiplier closest to z=-1.
           V=-1.d0
        ELSE
-          ! For LP: Find the multiplier closest to z=-1.
+          ! For LP: Find the multiplier closest to z=1.
           V=1.d0
        ENDIF
        AMIN=HUGE(1.d0)
        LOC=2
        DO J=2,NDM
           IF(EV(J)==CMPLX( HUGE(1.0D0), HUGE(1.0D0), KIND(1.0D0) ))CYCLE
+          ! do not select a complex multiplier
+          IF(AIMAG(EV(J))/=0)CYCLE
           AZM1= ABS( EV(J) - V )
           IF(AZM1<AMIN)THEN
              AMIN=AZM1
@@ -1937,7 +1944,11 @@ CONTAINS
        ENDDO
        IF(LOC.NE.2) THEN
           ZTMP=EV(LOC)
-          EV(LOC)=EV(2)
+          ! shift EV(2:LOC-1) to EV(3:LOC) to preserve ordering
+          ! (a+bi, a-bi) for complex multipliers.
+          DO J=LOC-1,2,-1
+             EV(J+1)=EV(J)
+          ENDDO
           EV(2)=ZTMP
        ENDIF
     ENDIF
@@ -1982,8 +1993,7 @@ CONTAINS
 
     AMIN= ABS( EV(1) - 1.d0 )
     IF(AMIN>5.0D-2 .AND. LEN_TRIM(ATYPE)>0) THEN
-       NINS=0
-       AP%NINS=NINS
+       AP%NINS=0
        ISP=-ISP
        AP%ISP=ISP
        IF(IID>0)THEN
@@ -1991,7 +2001,7 @@ CONTAINS
           DO I=1,NDM
              WRITE(9,105)ABS(IBR),NTOP+1,I,EV(I)
           ENDDO
-          WRITE(9,104)ABS(IBR),NTOP+1,NINS
+          WRITE(9,104)ABS(IBR),NTOP+1,AP%NINS
        ENDIF
        RETURN
     ENDIF
@@ -2020,11 +2030,11 @@ CONTAINS
 ! Use, for example, tol=1d-3 for conservative systems.
     tol=1.d-5
 
-    NINS1=1
+    NINS=1
     IF(NDM>1) THEN
        DO I=2,NDM
           IF(EV(I)==CMPLX( HUGE(1.0D0), HUGE(1.0D0), KIND(1.0D0) ))CYCLE
-          IF( ABS(EV(I)).LE.(1.d0+tol))NINS1=NINS1+1
+          IF( ABS(EV(I)).LE.(1.d0+tol))NINS=NINS+1
        ENDDO
        IF(LEN_TRIM(ATYPE)>0)THEN
           IF(ISW.EQ.2)THEN
@@ -2052,14 +2062,7 @@ CONTAINS
        ENDIF
     ENDIF
     IF( LEN_TRIM(ATYPE)>0 .AND. IID>=2 ) WRITE(9,103)ABS(IBR),NTOP+1,D
-    FNSPBV=D
-    AP%SPBF=FNSPBV
-
-    NINS=AP%NINS
-    IF(LEN_TRIM(ATYPE)>0)THEN
-       IF(NINS1==NINS.AND.AP%ITPST/=8)ATYPE=TRIM(ATYPE)//'0'
-    ENDIF
-    NINS=NINS1
+    AP%SPBF=D
     AP%NINS=NINS
 
     IF(IID>0)THEN
@@ -2081,6 +2084,36 @@ CONTAINS
 104 FORMAT(I4,I6,9X,'Multipliers:     Stable:',I4)
 105 FORMAT(I4,I6,9X,'Multiplier',I3,1X,2ES14.5, &
          '  Abs. Val.',ES14.5)
+
+  END SUBROUTINE PVSPBV
+
+! ------ --------- -------- ------
+  DOUBLE PRECISION FUNCTION FNSPBV(AP,PAR,ATYPE,EV)
+
+! This function returns a quantity that changes sign when a complex
+! pair of eigenvalues of the linearized Poincare map moves in or out
+! of the unit circle or when a real eigenvalues passes through -1.
+
+    TYPE(AUTOPARAMETERS), INTENT(INOUT) :: AP
+    DOUBLE PRECISION, INTENT(INOUT) :: PAR(*)
+    CHARACTER(LEN=*), INTENT(OUT) :: ATYPE
+    COMPLEX(KIND(1.0D0)), INTENT(IN) :: EV(*)
+
+    ! Local
+    DOUBLE PRECISION :: THETA
+    INTEGER, SAVE :: NINS
+
+    IF(AP%ISP==0)RETURN
+
+    ATYPE=TPSPBV(AP%NDM,AP%EPSS,AP%ITPST,PAR,AP%NPAR,EV,THETA)
+
+    IF(CHECKSP(ATYPE,AP%IPS,AP%ILP,AP%ISP))THEN
+       IF(AP%NINS==NINS.AND.AP%ITPST/=8)ATYPE=TRIM(ATYPE)//'0'
+    ELSE
+       ATYPE=''
+    ENDIF
+    NINS=AP%NINS
+    FNSPBV=AP%SPBF
 
   END FUNCTION FNSPBV
 

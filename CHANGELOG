@@ -1,3 +1,130 @@
+0.9.4:
+* Main AUTO
+  - Remove support for pre-F2003 compilers.
+    iso_c_binding and and procedure pointers are available since GCC 4.3 & 4.4 from
+    around 2008, there is no need to support older compilers.
+    Use Fortran 2003 C interoperability features for C user files.
+    This replaces the older autoconf based methods, now that F2003 is
+    ubiquitous.
+  - Compute Floquet multipliers before PVLS if possible (#35, #40)
+    This makes custom test functions via PVLS more reliable if they
+    check Floquet multipliers via GETP('EIG',IND,U).
+  - Similarly, compute eigenvalues and eigenvectors before PVLS if possible
+    This makes custom test functions via PVLS more reliable if they
+    check eigenvalues via GETP('EIG',IND,U).
+  - Properly prototype user functions in C.
+    This avoids warnings from Clang.
+  - mesh: use closest point for linear time interpolation.
+    This improves convergence in the ab demo.
+  - Fix allocation/index issues with user-defined integral conditions in HomCont
+    (Bjorn Sandstede ran into this bug).
+    Fixed a similar under-allocation in BPCONT while I was at it.
+  - Fix "make install": "sed" on MacOS doesn't support plain -i;
+    config.h is no longer needed.
+  - Take auto_f2c.h into account as dependency for C user files.
+* auto97 GUI
+  - Fix compiler warnings
+* PLAUT
+  - Fix compiler warnings
+* PLAUT04
+  - Fix compiler warnings
+  - Correct editMenuCentered to editMenuBary
+  - Eliminate deprecated sprintf() and QString::null
+  - Fix DEBUG build of solution.c++ using std::cout and std::endl (#36)
+  - Update SoQt from 1.6.0 to 1.6.2 for Mac OS documentation and testing
+* Python
+  - Use `brew install python-matplotlib` for Mac OS documentation and testing
+  - Properly escape backslashes or use raw strings in strings.
+    This avoids warnings from Python 3.12.
+  - Fix issue in parseS with numpy 1.23.5 preventing plots (#37)
+    We have to use flist.tolist() == [] instead of flist == []
+    Thanks Zachary Nicolaou!
+  - Replace constants["homcont"] with constants.get("homcont") (#34)
+    To fix an issue where HomCont isn't actually used.
+    (Andreas Amann)
+  - Add inline plot support for jupyter notebooks (#32)
+    Calling auto.plot() from a jupyter notebook previously used the
+    TkAgg backend and opened a new TkInter window. This interfered with
+    the jupyter eventloop and made Auto difficult to use from
+    jupyter. This patch avoids the problem, by not interfering with the
+    matplotlib backend, if we run from within a notebook.  This results
+    in (non-interactive) inline plots inside the browser window, similar
+    to matplotlib figures after "%matplotlib inline".
+    (Andreas Amann)
+  - matplotlib grapher: use remove() method of artists to remove them.
+    You can no longer delete them from the lines/texts list in MPL 3.7.
+  - use plain bool instead of numpy.bool
+    numpy.bool was removed and was just an alias to plain bool
+* Testing
+  - CI: remove Ubuntu 18.04, add 22.04 tests, and MacOS 12 (Monterey)
+    18.04 and MacOS 10.15 are deprecated by GitHub, won't run any more.
+    CI: MacOS: Python2 workarounds
+    CI: MacOS: update homebrew to fix the TeX install
+* Demos
+  - Properly prototype 3d.c in python/n-body demo
+  - Minor changes to abcb and fnb demos to pass regression test, as
+    mesh numerics changed a tiny bit (for the better!) depending on platform.
+  - Add demos/cusp/cusp.ipynb Jupyter notebook demo (Andreas Amann)
+0.9.3:
+* Main AUTO
+  - Split MPI broadcast for scaling factor off parameter/rds broadcast.
+    This simplifies some parameter passing.
+  - Fix bashisms in helper scripts (https://bugs.debian.org/772189, Sergey B Kirpichev)
+  - Fix loss of precision for one call of CMPLX
+  - Use DSTEST instead of uninitialized RDS in diagnostics when converged already.
+  - Fix compilation with GCC 10, by making DGEMV calls consistent. This fixes #8.
+  - Use "use mpi" instead of include mpif.h.
+    This avoids issues with gcc 10 argument mismatches and is still compatible
+    with many older MPIs.
+  - Don't use STOP for normal termination.
+    This avoids reporting innocent floating point exceptions.
+  - Fix parallel make for building.
+  - Implement MPI parallel version of RNRM2 (RNRM2P) and RINTG (RINTGP)
+    The serial ones gave incorrect results.
+  - Add "make install" and "make install-strip" targets
+  - Add "make check" and "make distclean" targets.
+  - Use -g by default, introduce --enable-debug configure flag for extra debugging.
+    --enable-debug sets extra FP and bound checking flags for GNU Fortran.
+  - Preserve order for complex multipliers when sorting Floquet
+    multipliers, and do not select a complex multiplier by accident when
+    the second multiplier should be 1 or -1 (on PD/LP curves). Fixes #15.
+  - Zero initialize Jacobian matrices in HomCont.
+    Some demos such as "she" don't fill them completely, causing use of
+    uninitialized variables.
+* Python
+  - Fix display of labels in interactive plots for Matplotlib 2.2 and
+    newer. Thanks to Edgardo Villar Sepulveda for reporting.
+  - Catch IOError for fcon cleanup. Avoids issues with macOS.
+* PLAUT04
+  - Update header for current stable Inventor version (2.1.5) (#4) (B Thomas)
+  - Fix failure to set SOXTLIB in configure with Open Inventor. Fixes #4 (B Thomas)
+  - Support Qt5 with SoQt
+  - Flatten autoconf configuration and use pkg-config autoconf macros for Coin and Qt
+* PLAUT
+  - Replace do termination labels with ENDDO
+    This fixes warnings such as
+    Warning: Fortran 2018 deleted feature: DO termination statement
+    which is not END DO or CONTINUE with label 10 at (1)
+  - Remove tek2ps, use tek2plot from GNU plotutils instead.
+    tek2ps has a copyright incompatible with the rest of AUTO, prohibiting
+    commercial redistribution, which is a problem for some Linux distributions.
+    Although it is rarely used any more, tek2plot from GNU plotutils can be
+    easily used as an alternative to tek2ps.
+* Testing
+  - CI: Run GitHub Actions tests on Ubuntu 18.04, 20.04 and macOS 10.15.
+* Manual
+  - Fix documentation for Jacobian of the boundary conditions.
+    Thanks to @giuseppetomassetti for spotting this. Fixes #17
+  - Eliminate use of moreverb/subfigure packages, instead use fancyvrb/subfig.
+    This way a more basic TeX installation is sufficient, e.g.
+    basictex on a Mac.
+  - Update macOS installation instructions (using Homebrew).
+* Demos
+  - Avoid MX in abcb demo, by decreasing NMX to avoid numerical noise
+  - Increase NTST in fnb demo, for better reproducibility
+  - Tighten NBC check in snh and pcl demos.
+    This avoids MPI workers (where NBC=0) trying to compute the Lin vector.
+  - Check for MPI worker in PVLS for r3b demo
 0.9.2:
 * Main AUTO
   - Print eigenvalues in Hopf detection function if following a

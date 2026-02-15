@@ -39,7 +39,11 @@
 #define KEYSEQUENCE_QUIT Qt::CTRL+Qt::Key_Q
 #else
 #define setCaption setWindowTitle
+#if QT_VERSION < 0x60300
 #define insertItem(a,b,c,d,e) addAction(a,b,c,d)
+#else
+#define insertItem(a,b,c,d,e) addAction(a,d,b,c)
+#endif
 #define insertSeparator addSeparator
 #define setCurrentItem setCurrentIndex
 #define currentItem currentIndex
@@ -48,7 +52,7 @@
 #define setItemEnabled(i,x) actions()[i]->setEnabled(x)
 #define setItemVisible(i,x) actions()[i]->setVisible(x)
 #define getSaveFileName(dir,filter,parent,name,caption) getSaveFileName(parent,caption,dir,filter)
-#define getOpenFileName(dir,filter,parent) getOpenFileName(parent,QString::null,dir,filter)
+#define getOpenFileName(dir,filter,parent) getOpenFileName(parent,QString(),dir,filter)
 #define KEYSEQUENCE_OPEN QKeySequence::Open
 #define KEYSEQUENCE_SAVE QKeySequence::Save
 #define KEYSEQUENCE_PRINT QKeySequence::Print
@@ -95,7 +99,7 @@ DecSpinBox::textFromValue( int value ) const {
 }
 
 int
-DecSpinBox::valueFromText( QString text ) const {
+DecSpinBox::valueFromText( const QString & text ) const {
     return int(text.toFloat()*10);
 }
 #else
@@ -1015,7 +1019,7 @@ MainWindow::buildCenterMenu()
                          SLOT(editMenuRotating()), 0, ROTATING_F);
     pulldown->insertSeparator();
     pulldown->insertItem("Bary &Centered", this,
-                         SLOT(editMenuCentered()), 0, INERTIAL_B);
+                         SLOT(editMenuBary()), 0, INERTIAL_B);
     pulldown->insertItem("&Big Primary Centered", this,
                          SLOT(editMenuBig()), 0, INERTIAL_S);
     pulldown->insertItem("&Small Primary Centered", this,
@@ -1162,6 +1166,7 @@ MainWindow::buildMenu()
 //
 ////////////////////////////////////////////////////////////////////////
 {
+#if defined(USE_BK_COLOR) || QT_VERSION < 0x40000
     QPopupMenu *pulldown2 = NULL;
     QPopupMenu *pulldown1, *pulldown3, *pulldown4, *pulldown5, *pulldown6, *pulldown7;
 // menu bar
@@ -1173,6 +1178,16 @@ MainWindow::buildMenu()
     pulldown7 = buildCoordMenu();
     pulldown5 = buildOptionMenu();
     pulldown6 = buildHelpMenu();
+#else
+    buildFileMenu();
+    if(useR3B)
+        buildCenterMenu();
+    buildStyleMenu();
+    buildTypeMenu();
+    buildCoordMenu();
+    buildOptionMenu();
+    buildHelpMenu();
+#endif
 
 #ifdef USE_BK_COLOR
 // set the background color for the pull down menus.
@@ -1184,7 +1199,9 @@ MainWindow::buildMenu()
     pulldown6->setPaletteBackgroundColor("white");
 #endif
 // the text in the menubar for these menus
+#if QT_VERSION < 0x40000 || (defined(__APPLE__) && defined(__MACH__))
     QMenuBar *menubar = menuBar();
+#endif
 #if QT_VERSION < 0x40000
     menubar->insertItem("&File", pulldown1);
     menubar->insertItem("&Type", pulldown4);
@@ -1316,8 +1333,13 @@ MainWindow::MainWindow() : QMainWindow()
         xAxisList->addItem( xAxis[i].c_str() );
     xAxisList->setCurrentItem(xCoordIndices[0]);
     // Connect the activated SIGNALs of the Comboboxes with SLOTs
+#if QT_VERSION < 0x60000
     connect(xAxisList, SIGNAL(activated(const QString &)),
             this, SLOT(xListCallBack(const QString &)));
+#else
+    connect(xAxisList, &QComboBox::textActivated,
+            this, &MainWindow::xListCallBack);
+#endif
 
 #ifdef USE_BK_COLOR
     xAxisList->setPaletteBackgroundColor("white");
@@ -1335,8 +1357,13 @@ MainWindow::MainWindow() : QMainWindow()
         yAxisList->addItem( yAxis[i].c_str() );
     yAxisList->setCurrentItem(yCoordIndices[0]);
     // Connect the activated SIGNALs of the Comboboxes with SLOTs
+#if QT_VERSION < 0x60000
     connect(yAxisList, SIGNAL(activated(const QString &)),
             this, SLOT(yListCallBack(const QString & )));
+#else
+    connect(yAxisList, &QComboBox::textActivated,
+            this, &MainWindow::yListCallBack);
+#endif
 
 #ifdef USE_BK_COLOR
     yAxisList->setPaletteBackgroundColor("white");
@@ -1354,8 +1381,13 @@ MainWindow::MainWindow() : QMainWindow()
         zAxisList->addItem( zAxis[i].c_str() );
     zAxisList->setCurrentItem(zCoordIndices[0]);
     // Connect the activated SIGNALs of the Comboboxes with SLOTs
+#if QT_VERSION < 0x60000
     connect(zAxisList, SIGNAL(activated(const QString &)),
             this, SLOT(zListCallBack(const QString &)));
+#else
+    connect(zAxisList, &QComboBox::textActivated,
+            this, &MainWindow::zListCallBack);
+#endif
 
 #ifdef USE_BK_COLOR
     zAxisList->setPaletteBackgroundColor("white");
@@ -1373,8 +1405,13 @@ MainWindow::MainWindow() : QMainWindow()
     labelsList->setCurrentItem(lblChoice[0]+LBL_OFFSET); //lblIndices[0]
 
 // Add Callback function for the LABELs drop down list
+#if QT_VERSION < 0x60000
     connect(labelsList, SIGNAL(activated(const QString &)),
             this, SLOT(lblListCallBack(const QString &)));
+#else
+    connect(labelsList, &QComboBox::textActivated,
+            this, &MainWindow::lblListCallBack);
+#endif
 
 #ifdef USE_BK_COLOR
     labelsList->setPaletteBackgroundColor("white");
@@ -1395,9 +1432,13 @@ MainWindow::MainWindow() : QMainWindow()
        coloringMethod+CL_SP_ITEMS : coloringMethod+specialColorItems);
 
 // Add Callback function for the coloring method seletion drop down list
+#if QT_VERSION < 0x60000
     connect(colorMethodSeletionList, SIGNAL(activated(const QString &)),
             this, SLOT(colorMethodSelectionCB(const QString &)));
-
+#else
+    connect(colorMethodSeletionList, &QComboBox::textActivated,
+            this, &MainWindow::colorMethodSelectionCB);
+#endif
 //-----------------------------------------------------Nov 06
 
 // build the numPeriodAnimated drop down list
@@ -1419,7 +1460,7 @@ MainWindow::MainWindow() : QMainWindow()
 	}
         else if (j < nItems - 1)
 	{
-	    numberP.sprintf("%i", iam);
+	    numberP = QString("%1").arg(QString::number(iam));
 	    iam *= 2;
 	}
 	else
@@ -1437,8 +1478,13 @@ MainWindow::MainWindow() : QMainWindow()
     numPeriodAnimatedList->setCurrentItem(i);
 
 // Add Callback function for the numberPeriodAnimated drop down list
+#if QT_VERSION < 0x60000
     connect(numPeriodAnimatedList, SIGNAL(activated(const QString &)),
             this, SLOT(numPeriodAnimatedCB(const QString &)));
+#else
+    connect(numPeriodAnimatedList, &QComboBox::textActivated,
+            this, &MainWindow::numPeriodAnimatedCB);
+#endif
 
 //----------------------------------------------------------------> Nov 06 End
 
@@ -2378,17 +2424,17 @@ MainWindow::getFileName(int fileMode)
     QString filename; 
 
     if(fileMode == SAVE_ITEM)
-        filename = QFileDialog::getSaveFileName(QString::null,
+        filename = QFileDialog::getSaveFileName(QString(),
                           "Inventor files (*.iv);;Any files (*)",
-                     this, 0, QString::null);
+                     this, 0, QString());
     else if(fileMode == PRINT_ITEM)
-        filename = QFileDialog::getSaveFileName(QString::null,
+        filename = QFileDialog::getSaveFileName(QString(),
 			  "PostScript files (*.ps *.eps);;Any files (*)",
                      this, "print file dialog", "Choose a file to print to" );
     else
-        filename = QFileDialog::getOpenFileName(QString::null,
+        filename = QFileDialog::getOpenFileName(QString(),
                           "AUTO files (b.* s.* d.*);;Any files (*)", this);
-    if(filename == QString::null)
+    if(filename == QString())
         return;
     if(fileMode == SAVE_ITEM)
         writeToFile(filename.toLocal8Bit());
@@ -2658,8 +2704,8 @@ FmDrawingArea::paintEvent( QPaintEvent * )
         else
             y =(tmp>0.0) ? (int)(150-log10(tmp)*50): (int)(log10(fabs(tmp))*50+250);
 
-        if(x>390) x = 390; if(x<10) y = 10;
-        if(y>390) y = 390; if(y<10) y = 10;
+        if(x>390) {x = 390;} if(x<10) {y = 10;}
+        if(y>390) {y = 390;} if(y<10) {y = 10;}
 
         p.drawLine(x-3, y-3, x+3, y+3);
         p.drawLine(x-3, y+3, x+3, y-3);
@@ -2680,8 +2726,7 @@ void popupFloquetMultiplierDialog(float data[], int size, int numFM)
 
     for(int i=0; i<size; ++i)
     {
-        QString temp;
-        temp.sprintf("Col[%2d ] = %+E", i+1, data[i]);
+        QString temp = QString::asprintf("Col[%2d ] = %+E", i+1, data[i]);
         str += temp;
         if(size<20 || (size>=20 && (i+1)%2==0)) str += "\n";
         else str += " | ";
@@ -2692,11 +2737,11 @@ void popupFloquetMultiplierDialog(float data[], int size, int numFM)
     {
         QString temp;
         if (fmData[j*2+1] < 0)
-            temp.sprintf(" [%2d] : %E - %Ei\n", j, fmData[j*2], -fmData[j*2+1]);
+            temp = QString::asprintf(" [%2d] : %E - %Ei\n", j, fmData[j*2], -fmData[j*2+1]);
         else if (fmData[j*2+1] > 0)
-            temp.sprintf(" [%2d] : %E + %Ei\n", j, fmData[j*2], fmData[j*2+1]);
+            temp = QString::asprintf(" [%2d] : %E + %Ei\n", j, fmData[j*2], fmData[j*2+1]);
         else
-            temp.sprintf(" [%2d] : %E\n", j, fmData[j*2]);
+            temp = QString::asprintf(" [%2d] : %E\n", j, fmData[j*2]);
         tmpstr += temp;
     }
 

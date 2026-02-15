@@ -61,7 +61,7 @@ CONTAINS
     INTEGER NDIM,IPS,IRS,ILP,IADS,ISP,ISW,NUZR,MXBF,NBIFS,NBFCS,ITPST
     INTEGER ITNW,ITP,I,ITEST,NINS,NBIF,NBFC,NODIR,NIT,NTOT,NTOP
     INTEGER NDM,IFOUND,ISTEPPED
-    DOUBLE PRECISION DS,DSMAX,RDS,DSTEST,TMP
+    DOUBLE PRECISION DS,DSMAX,RDS,DSTEST
     LOGICAL ISTOP,STEPPED
     INTEGER STOPCNTS(-9:14)
     CHARACTER(4) ATYPE,ATYPEDUM
@@ -96,7 +96,7 @@ CONTAINS
     CALL INIT3(AP,ICP,PAR,THL,THU,IUZ,VUZ)
     THU(AP%NDIM+1)=THL(1)
 
-    ALLOCATE(AA(NDIM+1,NDIM+1),U(NDIM+1),UDOT(NDIM+1))
+    ALLOCATE(U(NDIM+1),UDOT(NDIM+1))
     ALLOCATE(STUD(NBIFS,NDIM+1),STU(NBIFS,NDIM+1),TEST(AP%NTEST),EVV(NDM))
     ALLOCATE(P1V(NDIM+1,NDIM+1))
 
@@ -121,6 +121,7 @@ CONTAINS
     NODIR=1
     CALL STPNAEI(AP,PAR,ICP,U,UDOT,NODIR)
     CALL PVLI(AP,ICP,U,NDIM,PAR,FNCI)
+    ALLOCATE(AA(NDIM+1,NDIM+1))
 
 ! Determine a suitable starting label and branch number
 
@@ -159,10 +160,6 @@ CONTAINS
        ELSEIF(ABS(IPS)==1.OR.IPS==11)THEN
           CALL STPRAE(AP,PAR,ICP,FUNI,U,UDOT,THU,-1,AA)
        ENDIF
-       IF(ABS(IPS)==1.OR.IPS==11)THEN
-          ! Get stability
-          TMP=FNCI(AP,ICP,U,NDIM,PAR,6,ATYPEDUM)
-       ENDIF
 
 ! Store plotting data for first point on the bifurcating branch
 ! or for the starting point
@@ -175,15 +172,10 @@ CONTAINS
 ! Provide initial approximation to the second point on the branch and
 ! determine the second point on the bifurcating or original branch
           CALL STEPAE(AP,PAR,ICP,FUNI,RDS,AA,U,UDOT,THU,NIT,ISW<0)
-          IF(NIT>0)CALL PVLI(AP,ICP,U,NDIM,PAR,FNCI)
+          CALL PVLI(AP,ICP,U,NDIM,PAR,FNCI)
 
           IF(ISW<0.OR.NIT==0)THEN
-             IF(ABS(IPS)==1.OR.IPS==11)THEN
-                ! Get stability
-                TMP=FNCI(AP,ICP,U,NDIM,PAR,6,ATYPEDUM)
-             ENDIF
              ! Store plotting data for second point :
-             CALL PVLI(AP,ICP,U,NDIM,PAR,FNCI)
              CALL STPLAE(AP,PAR,ICP,ICU,U,UDOT,NIT,ISTOP)
           ENDIF
        ENDIF
@@ -196,9 +188,7 @@ CONTAINS
 ! Find the next solution point on the branch
           CALL STEPAE(AP,PAR,ICP,FUNI,RDS,AA,U,UDOT,THU,NIT)
           ISTOP=NIT==0
-          IF(.NOT.ISTOP)THEN
-             CALL PVLI(AP,ICP,U,NDIM,PAR,FNCI)
-          ENDIF
+          CALL PVLI(AP,ICP,U,NDIM,PAR,FNCI)
           DSTEST=RDS
 
           IFOUND=0
@@ -243,7 +233,6 @@ CONTAINS
 ! Store plotting data on unit 7 :
 
           NTOT=AP%NTOT
-          CALL PVLI(AP,ICP,U,NDIM,PAR,FNCI)
           CALL STPLAE(AP,PAR,ICP,ICU,U,UDOT,NIT,ISTOP)
 
 ! Adapt the stepsize along the branch

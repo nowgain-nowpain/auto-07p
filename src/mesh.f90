@@ -10,8 +10,8 @@ MODULE MESH
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: MSH,GENWTS,WINT,ADPTDS,ADAPT,ADAPT2,INTWTS,SCALEB,SCALEBP
-  PUBLIC :: RNRMSQ,RNRMSQP,RINTG,RNRM2,RMXUPS,RMNUPS,RMXUPST,RMNUPST
-  PUBLIC :: MXUPSP,RMXUPSP,RMNUPSP
+  PUBLIC :: RNRMSQ,RNRMSQP,RINTG,RINTGP,RNRM2,RNRM2P,RMXUPS,RMNUPS
+  PUBLIC :: RMXUPST,RMNUPST,MXUPSP,RMXUPSP,RMNUPSP
 
 CONTAINS
 
@@ -402,7 +402,7 @@ CONTAINS
     DOUBLE PRECISION, INTENT(OUT) :: TMNEW(0:NNEW)
 ! Local
     INTEGER J,J1
-    DOUBLE PRECISION DAL,UNEQ
+    DOUBLE PRECISION DAL,UNEQ,X1,X2
     DOUBLE PRECISION, ALLOCATABLE :: EQF(:),DEQF(:)
     ALLOCATE(EQF(0:NOLD),DEQF(NOLD))
 
@@ -432,7 +432,14 @@ CONTAINS
           J=J+1
        ENDDO
        J=J-1
-       TMNEW(J1)=TMOLD(J)+(UNEQ-EQF(J))/DEQF(J+1)
+       X1=UNEQ-EQF(J)
+       X2=EQF(J+1)-UNEQ
+       IF(X1<=X2)THEN
+          TMNEW(J1)=TMOLD(J)+X1/DEQF(J+1)
+       ELSE
+          ! More accurate FP rounding for UNEQ closer to EQF(J+1)
+          TMNEW(J1)=TMOLD(J+1)-X2/DEQF(J+1)
+       ENDIF
     ENDDO
 
     TMNEW(NNEW)=TMOLD(NOLD)
@@ -657,6 +664,50 @@ CONTAINS
   END FUNCTION RINTG
 
 ! ------ --------- -------- -----
+  DOUBLE PRECISION FUNCTION RINTGP(NTST,NCOL,NDIM,IC,UPS,DTM,NA)
+
+    USE AUTOMPI
+
+! Computes the integral of the IC'th component of UPS.
+! Parallelized using MPI without MPI_Reduce so addition order is consistent.
+
+    INTEGER, INTENT(IN) :: IC,NDIM,NCOL,NTST,NA
+    DOUBLE PRECISION, INTENT(IN) :: UPS(NDIM,0:NTST*NCOL),DTM(NTST)
+! Local
+    DOUBLE PRECISION WI(0:NCOL)
+    INTEGER J,K
+    DOUBLE PRECISION S
+    DOUBLE PRECISION, ALLOCATABLE :: SS(:)
+
+    IF(MPIKWT()==1)THEN
+       RINTGP=RINTG(NTST,NCOL,NDIM,IC,UPS,DTM)
+       RETURN
+    ENDIF
+
+! Weights for the integration formulae :
+    CALL WINT(NCOL,WI)
+
+    ALLOCATE(SS(NTST))
+    K=0
+    DO J=1,NA
+       SS(J)=DTM(J)*DOT_PRODUCT(WI,UPS(IC,K:K+NCOL))
+       K=K+NCOL
+    ENDDO
+
+    CALL MPIGAT(SS,1,NTST)
+    S=0.d0
+    IF(MPIIAM()==0)THEN
+       DO J=1,NTST
+          S=S+SS(J)
+       ENDDO
+    ENDIF
+
+    DEALLOCATE(SS)
+    RINTGP=S
+
+  END FUNCTION RINTGP
+
+! ------ --------- -------- -----
   DOUBLE PRECISION FUNCTION RNRM2(NTST,NCOL,NDIM,IC,UPS,DTM)
 
 ! Computes the L2-norm of the IC'th component of UPS.
@@ -681,6 +732,50 @@ CONTAINS
     RNRM2=SQRT(S)
 
   END FUNCTION RNRM2
+
+! ------ --------- -------- ------
+  DOUBLE PRECISION FUNCTION RNRM2P(NTST,NCOL,NDIM,IC,UPS,DTM,NA)
+
+    USE AUTOMPI
+
+! Computes the L2-norm of the IC'th component of UPS.
+! Parallelized using MPI without MPI_Reduce so addition order is consistent.
+
+    INTEGER, INTENT(IN) :: IC,NDIM,NCOL,NTST,NA
+    DOUBLE PRECISION, INTENT(IN) :: UPS(NDIM,0:NTST*NCOL),DTM(NTST)
+! Local
+    DOUBLE PRECISION WI(0:NCOL)
+    INTEGER J,K
+    DOUBLE PRECISION S
+    DOUBLE PRECISION, ALLOCATABLE :: SS(:)
+
+    IF(MPIKWT()==1)THEN
+       RNRM2P=RNRM2(NTST,NCOL,NDIM,IC,UPS,DTM)
+       RETURN
+    ENDIF
+
+! Weights for the integration formulae :
+    CALL WINT(NCOL,WI)
+
+    ALLOCATE(SS(NTST))
+    K=0
+    DO J=1,NA
+       SS(J)=DTM(J)*DOT_PRODUCT(WI,UPS(IC,K:K+NCOL)**2)
+       K=K+NCOL
+    ENDDO
+
+    CALL MPIGAT(SS,1,NTST)
+    S=0.d0
+    IF(MPIIAM()==0)THEN
+       DO J=1,NTST
+          S=S+SS(J)
+       ENDDO
+    ENDIF
+
+    DEALLOCATE(SS)
+    RNRM2P=SQRT(S)
+
+  END FUNCTION RNRM2P
 
 ! ------ --------- -------- ------
   DOUBLE PRECISION FUNCTION RMXUPS(NTST,NCOL,NDIM,I,UPS)

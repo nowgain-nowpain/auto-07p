@@ -7,10 +7,11 @@
 \usepackage{include/harvard}
 \usepackage{alltt}
 \usepackage{longtable}
-\usepackage{moreverb}
+\usepackage{verbatim}
+\usepackage{fancyvrb}
 \usepackage{amsmath,amssymb}
 \usepackage{url}
-\usepackage{subfigure}
+\usepackage{subfig}
 \usepackage{xspace}
 \pagestyle{plain}
 \topmargin=0pt
@@ -54,7 +55,7 @@ Xianjun Wang,
 and
 Chenghai Zhang.\\
 }}
-\date{November 2019}
+\date{August 2021}
 \pagenumbering{alph}
 \maketitle
 \pagenumbering{arabic}
@@ -178,16 +179,16 @@ License (GPL), in particular, Coin, SoQt and Qt. In that case the
 %The {\cal AUTO} files {\filef auto.ps.gz, auto.tar.gz} and {\filef README} 
 %are available via FTP from 
 %directory {\filef pub/doedel/auto} at \url{ftp.cs.concordia.ca}.
-The {\cal AUTO} file \filef{auto07p-0.9.2.tar.gz} is
+The {\cal AUTO} file \filef{auto07p-0.9.3.tar.gz} is
 available via \url{http://cmvl.cs.concordia.ca/auto}.
 %The {\filef README} file contains the instructions for printing this manual.
 Here it is assumed that you are using the Unix (e.g. \emph{bash}) shell 
-and that the file \filef{auto07p-0.9.2.tar.gz} is in your main
+and that the file \filef{auto07p-0.9.3.tar.gz} is in your main
 directory. See below for OS-specific notes.
 
 While in your main directory, enter the commands
-\commandf{gunzip auto07p-0.9.2.tar.gz},
-followed by \commandf{tar xvfo auto07p-0.9.2.tar}.
+\commandf{gunzip auto07p-0.9.3.tar.gz},
+followed by \commandf{tar xvfo auto07p-0.9.3.tar}.
 This will result in a directory \filef{auto}, 
 with one subdirectory, \filef{auto/07p}. 
 Type \commandf{cd auto/07p}
@@ -198,17 +199,33 @@ to check your system for required compilers and libraries.
 Once the \filef{configure} script has finished you 
 may then type \commandf{make} to compile \AUTO
 and its ancillary software.
+
 The \filef{configure} script is designed to detect the details
 of your system which \AUTO requires to compile successfully.
 If either the \filef{configure} script or the \filef{make} command
 should fail, you may assist the \filef{configure} script by giving
 it various command line options.  Please type \commandf{./configure --help}
-for more details.
+for more details. Of particular interest here is
+\commandf{./configure --enable-debug} which, if the GNU Fortran
+compiler is used, enables bounds checking and floating point traps at
+the expense of speed.
+
 Upon compilation, you may type 
 \commandf{make clean}  
 to remove unnecessary files.
 
-To run \AUTO you need to set your environment variables correctly.
+Subsequently \commandf{make install} (or \commandf{sudo make install})
+will install \commandf{auto} and
+\commandf{autox} executables in \filef{\$prefix/bin} and other files under
+\filef{\$prefix/lib/auto-07p} where \filef{\$prefix} equals
+\filef{/usr/local} by default, and can be set using
+\commandf{./configure --prefix=...} in the usual way.
+Note however that for a single user
+\commandf{make install} is not necessary, and \AUTO can be directly
+used from where it was extracted.
+
+To run \AUTO directly in this way you need to set your environment
+variables correctly.
 Assuming \AUTO is installed in your home directory, the following
 commands set your environment variables so that you will be able to
 run the \AUTO commands, and may be placed into your \filef{.login},
@@ -234,7 +251,7 @@ To use the Python CLUI and the ``@pp'' {\cal PyPLAUT} plotter it
 is strongly recommended to install NumPy
 (\url{https://numpy.org}), TkInter, and
 Matplotlib (\url{https://matplotlib.org/}).
-Python itself needs to be at least version 2.3 or higher, but 2.7 or
+Python itself needs to be at least version 2.3 or higher, but 3.6 or
 higher is strongly recommended.
 For enhanced interactive use of the Python CLUI it is also worth
 installing IPython (\url{https://ipython.org}).
@@ -270,9 +287,9 @@ compilers (\filef{src/unix.f90}), and if that fails too, uses a set of
 dummy replacement routines (\filef{src/compat.f90}), which could be
 edited for some obscure installations.
 
-The PostScript conversion command \commandf{@ps} is compiled by
-default. Alternatively you can type \commandf{make} in the directory
-\filef{auto/07p/tek2ps}.
+The PostScript conversion command \commandf{@ps} uses
+\commandf{tek2plot} from GNU plotutils,
+see \url{https://www.gnu.org/software/plotutils/}.
 To generate the on-line manual, type \commandf{make} in
 \filef{auto/07p/doc}, which depends on the presence of xfig's
 (transfig) fig2dev utility.
@@ -299,17 +316,17 @@ Fedora and Red Hat and its derivatives:
 \begin{itemize}
 \item Python: \filef{python-matplotlib-tk} and \filef{ipython}.
 \item {\cal PLAUT04}: \filef{SoQt-devel} and \filef{qt-config}.
-\item {\cal PLAUT}: \filef{xterm}.
+\item {\cal PLAUT}: \filef{xterm} and \filef{plotutils}.
 \item GUI94: \filef{motif-devel}.
 \item manual: \LaTeX (\filef{texlive-*.noarch}) and \filef{transfig}.
 \end{itemize}
 and the following for Ubuntu and Debian:
 \begin{itemize}
-\item Python: \filef{python-matplotlib} and \filef{ipython}.
-\item {\cal PLAUT04}: SoQt (\filef{libsoqt4-dev}).
-\item {\cal PLAUT}: \filef{xterm}.
+\item Python: \filef{python-matplotlib} or \filef{python3-matplotlib} and \filef{ipython}.
+\item {\cal PLAUT04}: SoQt (\filef{libsoqt4-dev} or \filef{libsoqt520-dev}).
+\item {\cal PLAUT}: \filef{xterm} and \filef{plotutils}.
 \item GUI94: \filef{libmotif-dev}.
-\item manual: \LaTeX (\filef{texlive}, \filef{texlive-latex-extra}, and \filef{transfig}.
+\item manual: \LaTeX (\filef{texlive}, \filef{texlive-latex-extra}, and \filef{transfig}).
 \end{itemize}
 Other distributions may have packages with similar names.
 
@@ -324,10 +341,34 @@ the location of these libraries, for instance {\tt /usr/local/lib}.
 you have the development tools installed (via \commandf{xcode-select
  --install}) or by installing XCode from the App Store.
 You do not need to start an X server to run AUTO.
-Furthermore, the following packages are recommended:
+
+You can use Homebrew, see \url{https://brew.sh/}, to install most
+dependencies:
+\begin{itemize}
+\item Gfortran: \filef{brew install gfortran}
+\item Python: \filef{brew install python-tk python-matplotlib}
+\item {\cal PLAUT04}: \filef{brew install cmake qt coin3d}\\
+You will then need to compile SoQt from source using a tarball available at
+\url{https://github.com/coin3d/soqt/releases}, for example:\\
+{\small \begin{boxedverbatim}
+curl -O -L \
+  https://github.com/coin3d/soqt/releases/download/v1.6.2/soqt-1.6.2-src.tar.gz
+tar xf soqt-1.6.2-src.tar.gz
+cd soqt/build
+cmake ..
+make
+sudo make install
+\end{boxedverbatim}
+}
+\item GUI94: \filef{brew install openmotif}
+\item manual: \LaTeX\xspace, and \filef{transfig} via \filef{brew
+  install basictex fig2dev; eval "\$(/usr/libexec/path\_helper)"}
+\end{itemize}
+
+Alternatively, the following methods have been used instead of
+Homebrew but are not as well tested:
 \begin{itemize}
 \item Gfortran: See \url{http://gcc.gnu.org/wiki/GFortranBinaries}.
-Alternatively you can use Homebrew, see \url{https://brew.sh/}.
 \item Python:
 The default system Python in Mac OS is usable.
 There are other alternatives, for instance Anaconda
@@ -336,23 +377,6 @@ at \url{https://docs.conda.io/en/latest/miniconda.html}.
 To be able to plot in the Python CLUI in some versions of Mac OS,
 \AUTO uses \filef{pythonw} instead of \filef{python}.
 This should happen automatically.
-\item {\cal PLAUT04}: PLAUT04 is more involved, as it depends on Qt version 4
-which is no longer supported. You can still install it using Homebrew via
-\url{https://github.com/cartr/homebrew-qt4/blob/master/README.md}.
-You will then need to compile Coin and SoQt from source using the
-zipfiles available at
-\url{https://bitbucket.org/Coin3D/coin/downloads/} and
-\url{https://bitbucket.org/Coin3D/soqt/downloads/}.
-For SoQt to compile properly, you may need to patch its configure script
-and then compile as follows:
-\begin{verbatim}
-sed -i -e 's/^\(LIBS=\$sim_ac_uniqued_list\)$/# \1/' configure
-sh configure
-make
-sudo make install
-\end{verbatim}
-\item GUI94: This is possible with Homebrew via \commandf{brew install openmotif}.
-\item manual: \LaTeX\xspace and transfig (comes with xfig).
 \end{itemize}
 
 \subsection{Installation on Windows}
@@ -861,11 +885,12 @@ omitted:
 \item[{\tt BCND}]
 \begin{itemize}
 \item
-Derivatives with respect to the two boundary conditions
-are specified in {\tt DBC(1:NBC, 1:NBC)} and {\tt DBC(1:NBC, NBC+1:2*NBC)},
+Derivatives of the boundary conditions with respect to phase-space
+variables at the two boundary points
+are specified in {\tt DBC(1:NBC, 1:NDIM)} and {\tt DBC(1:NBC, NDIM+1:2*NDIM)},
 respectively.
 \item
-Parameter derivatives go into {\tt DBC(1:NBC, 2*NBC+1:2*NBC+NPAR)}.
+Parameter derivatives go into {\tt DBC(1:NBC, 2*NDIM+1:2*NDIM+NPAR)}.
 \end{itemize}
 \item[{\tt ICND}]
 \begin{itemize}
@@ -3592,10 +3617,14 @@ Run a shell command.
 %==============================================================================
 Apart from the Python commands described in the previous chapter,
 {\cal AUTO} can also be run with the GUI described in Chapter~\ref{ch:GUI},
-or using the Unix commands described below. These Unix commands run both
-directly in the shell and at the {\tt AUTO} Python prompt.
-The {\cal AUTO} aliases must have been activated; see Section~\ref{sec:Installation}; 
-and an equations-file {\tt xxx.f90} 
+or using the Unix commands described below. These Unix commands can be run
+directly in the shell provided that the {\cal AUTO} aliases have been
+activated by extending \filef{\$PATH} and setting \filef{\$AUTO\_DIR};
+see Section~\ref{sec:Installation}.
+They also run at the {\tt AUTO} Python prompt without need for
+activation.
+
+Similar to the Python interface an equations-file {\tt xxx.f90}
 and a corresponding constants-file {\tt c.xxx} 
 (see Section~\ref{ch:User_supplied_files})
 must be in the current user directory.
@@ -8613,7 +8642,7 @@ The eigenvalue problem is given by the equations
 
 \begin{equation} \begin{array}{cl}
   u_1 ' &= u_2  ,  \\
-  u_2 ' &= (p_1 \pi)^{2} u_1 , \end{array} \end{equation}
+  u_2 ' &=-(p_1 \pi)^{2} u_1 , \end{array} \end{equation}
 with boundary conditions $ u_1(0)-p_2=0 $ and $  u_1(1)=0.$
 We add the integral constraint
  $$ \int_0^{1} u_1(t)^{2} dt - p_3 = 0. $$

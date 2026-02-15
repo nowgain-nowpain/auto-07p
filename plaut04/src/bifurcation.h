@@ -14,7 +14,7 @@ class Bifurcation {
     void alloc();
     void dealloc();
     void denormalizePosition(float position[]);
-    bool read(const char *bFileName, int varIndices[]);
+    bool read(const char *bFileName);
     bool parse(const char *bFileName);
     void normalizeData(long int idx, float xyzCoords[3]);
 
@@ -41,9 +41,6 @@ class Bifurcation {
 
     int varIndices_[3];
     int32_t *numVerticesEachBranch_;
-    int *xAxisItems_;
-    int *yAxisItems_;
-    int *zAxisItems_;
     int maxndim_;
     int nar_;
 
@@ -56,7 +53,6 @@ class Bifurcation {
         int32_t numVerticesEachLabelInterval; 
         long int label;   // this real lenght should equal to totalLabels;
     } *orbits_;
-    int      numAxis_;        // number of groups of axis. 3 is a group.
     int totalLabels_;
 
     // max saves the maximum value of the coordinate.

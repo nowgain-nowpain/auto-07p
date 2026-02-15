@@ -13,7 +13,7 @@ class Solution {
     SoSeparator *createSceneWithWidgets();
     SoSeparator *createInertialFrameScene(float dis);
     bool parse(const char* sFileName);
-    bool read(const char* sFileName, int varIndices[]);
+    bool read(const char* sFileName);
     void normalizeData();
     void alloc();
     void dealloc();
@@ -62,7 +62,7 @@ class Solution {
 
     SoSeparator *animateOrbitInertialSysUsingLine(int iBranch, int iOrbit,
      float (*vertices)[3], float (*largePrimPos)[3], float (*smallPrimPos)[3],
-     float * myColorBase, float period, int size,
+     float * myColorBase, int size,
      float scaler, int stability, int type);
     SoSeparator *drawAnOrbitInertialSysUsingLines(int iBranch, int iOrbit,
      float (*myVertices)[3], float *myColorBase,
@@ -110,9 +110,9 @@ class Solution {
     } *orbits_;              // we have an array of numOrbits of these
     int      numAxis_;        // number of groups of axis. 3 is a group.
     int      totalLabels_;
-    double (**parMax_);     // keep the max parameter values in each branch.
-    double (**parMin_);     // keep the min parameter values.
-    double (**parMid_);     // keep the mid parameter values.
+    double **parMax_;       // keep the max parameter values in each branch.
+    double **parMin_;       // keep the min parameter values.
+    double **parMid_;       // keep the mid parameter values.
     int      *parID_;       // keep the id for the par, namely the x for par(x)
 
     // max saves the maximum value of the coordinate.
