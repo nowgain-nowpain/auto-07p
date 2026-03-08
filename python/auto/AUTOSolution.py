@@ -23,8 +23,10 @@ import sys
 import struct
 try:
     from UserDict import UserDict
+    from UserList import UserList
 except ImportError: #Python 3
     from collections import UserDict
+    from collections import UserList
 try:
     file
 except NameError: #Python 3
@@ -38,6 +40,73 @@ from auto.AUTOutil import format19_10E3
 from auto.parseCommon import AUTOParameters
 
 import gzip
+
+
+# an old-style point and point keys within an AUTOSolution
+class SLPointKey(UserList):
+    def __init__(self, solution=None, index=None, coords=None):
+        if coords=="u dot":
+            self.solution = solution["udotps"]
+        else:
+            self.solution = solution
+        self.index = index
+    def __getattr__(self, attr):
+        if attr == 'data':
+            return [point[self.index] for point in self.solution.coordarray]
+        raise AttributeError(attr)
+    def __setitem__(self, i, item):
+        self.solution.coordarray[i,self.index] = item
+    def __str__(self):
+        return str(self.data)
+    def append(self, item):
+        self.enlarge(1)
+        self.solution.coordarray[-1,self.index] = item
+        self.data.append(item)
+    def extend(self, other):
+        self.enlarge(len(other))
+        for i in range(len(other)):
+            self.solution.coordarray[-len(other)+i,self.index] = other[i]
+    def enlarge(self, ext):
+        # enlarges the dimension of coordarray and coordnames
+        s = self.solution
+        if s._dims is None:
+            s._dims = [s.dimension]*len(s)
+            s0 = s.coordnames[0]
+            s.extend([s0[0:s0.find('(')+1]+str(s.dimension+i+1)+')'
+                      for i in range(ext)])
+        s._dims[self.index] = s.dimension
+        if min(s._dims) == max(s._dims):
+            s._dims = None
+
+class SLPoint(Points.Point):
+    def __init__(self, p, solution=None, index=None):
+        Points.Point.__init__(self, p)
+        self.index = index
+        self.solution = solution
+
+    def __contains__(self, key):
+        return key in ["u", "u dot", "t"] or Points.Point.has_key(self,key)
+
+    def has_key(self, key):
+        return self.__contains__(key)
+
+    def __getitem__(self, coords):
+        if coords == "t":
+            return self.solution.indepvararray[self.index]
+        if coords in ["u", "u dot"]:
+            return SLPointKey(self.solution, self.index, coords)
+        return Points.Point.__getitem__(self, coords)
+
+    def __setitem__(self, coords, item):
+        if coords == 't':
+            self.solution.indepvararray[self.index] = item
+        Points.Point.__setitem__(self, coords, item)
+
+    def __str__(self):
+        return str({ "t" : self["t"], "u" : self["u"], "u dot" : self["u dot"]})
+
+    __repr__ = __str__
+
 
 class AUTOSolution(UserDict,Points.Pointset):
 
