@@ -79,7 +79,7 @@ class AUTOSolution(UserDict,Points.Pointset):
             self.__parnames = []
 
             try:
-                from auto.parseS import fileS
+                from auto.fileS import fileS
             except ImportError:
                 fileS = None
 
