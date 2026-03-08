@@ -7,7 +7,7 @@ except ImportError: # Python 3
     from io import StringIO
 import re
 import glob
-from auto import AUTOExceptions,parseC,parseS
+from auto import AUTOExceptions,parseC
 from auto.AUTOSolution import AUTOSolution
 import gc
 try:
