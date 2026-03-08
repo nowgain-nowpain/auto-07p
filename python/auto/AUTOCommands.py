@@ -8,6 +8,7 @@ except ImportError: # Python 3
 from auto import parseC
 from auto import parseB
 from auto import parseS
+from auto.AUTOSolution import AUTOSolution
 from auto import parseBandS
 from auto import parseH
 from auto import bifDiag
@@ -569,7 +570,7 @@ def save(name1,name2=None,templates=None):
                     break
         else:
             if (type(parsed) == type([]) and
-                isinstance(parsed[0], parseS.AUTOSolution)):
+                isinstance(parsed[0], AUTOSolution)):
                 parsed = parseS.parseS(parsed)
             parsed.writeFilename(n1s)
             msg = "Saving to %s ... done\n"%(n1s)
@@ -1701,7 +1702,7 @@ def plot3(name=None,r3b=False):
                 d.writeFilename("fort.8")
             elif isinstance(d,parseB.AUTOBranch):
                 d.writeFilename("fort.7")
-            elif isinstance(d,parseS.AUTOSolution):
+            elif isinstance(d,AUTOSolution):
                 d.writeFilename("fort.8")
     sys.stdout.flush()
     if not os.path.exists(cmd):
@@ -1831,7 +1832,7 @@ try:
                 ns = parsed
             elif isinstance(parsed,parseB.AUTOBranch):
                 nb = parseB.parseBR([parsed])
-            elif isinstance(parsed,parseS.AUTOSolution):
+            elif isinstance(parsed,AUTOSolution):
                 ns = parseS.parseS([parsed])
             if nb:
                 options["grapher_bifurcation_diagram"] = nb

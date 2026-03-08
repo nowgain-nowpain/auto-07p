@@ -8,6 +8,7 @@ except ImportError: # Python 3
 import re
 import glob
 from auto import AUTOExceptions,parseC,parseS
+from auto.AUTOSolution import AUTOSolution
 import gc
 try:
     import subprocess
@@ -73,7 +74,7 @@ class runAUTO:
         self.options["command"] = None
         self.options["makefile"] = None
         self.options["constants"] = parseC.parseC()
-        self.options["solution"] = parseS.AUTOSolution()
+        self.options["solution"] = AUTOSolution()
         self.options["homcont"] = None
         self.options["selected_solution"] = None
 
@@ -104,7 +105,7 @@ class runAUTO:
                     t=kw.get('t')
                     if "t" in kw and value is not None:
                         del kw["t"]
-                    value = parseS.AUTOSolution(value,t=t)
+                    value = AUTOSolution(value,t=t)
                 self.options[key] = value
 
         self.options["constants"].update(**kw)

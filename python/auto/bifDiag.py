@@ -6,6 +6,7 @@ from auto import parseB
 from auto import parseC
 from auto import parseH
 from auto import parseS
+from auto.AUTOSolution import AUTOSolution
 from auto import parseD
 from auto import Points
 from auto import AUTOExceptions
@@ -42,7 +43,7 @@ class bifDiag(parseB.parseBR):
             ioerrors.append(str(sys.exc_info()[1]))
             parseB.parseBR.__init__(self)
             fort7_filename = None
-        if isinstance(fort8_filename, parseS.AUTOSolution):
+        if isinstance(fort8_filename, AUTOSolution):
             fort8_filename = [fort8_filename]
         try:
             solution = parseS.parseS(fort8_filename)
@@ -102,7 +103,7 @@ class bifDiag(parseB.parseBR):
                     s = solution[i]
                     if x.get("LAB",0) != 0 or s["LAB"] == 0:
                         i = i+1
-                        s = x["solution"] = parseS.AUTOSolution(
+                        s = x["solution"] = AUTOSolution(
                             s, constants=constants)
                         if d.coordnames != []:
                             s.b = d[ind]
