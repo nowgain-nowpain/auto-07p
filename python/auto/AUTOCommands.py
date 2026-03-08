@@ -11,7 +11,6 @@ from auto import parseS
 from auto.AUTOSolution import AUTOSolution
 from auto import parseBandS
 from auto import parseH
-from auto import bifDiag
 import os
 from auto import AUTOutil
 import sys
@@ -316,6 +315,7 @@ def merge(name1=None,name2=None,templates=None):
     Type FUNC('xxx','yyy') to merge branches in the existing data-files
     s.xxx, b.xxx, and d.xxx and save them to s.yyy, b.yyy, and d.yyy.
     """
+    from auto import bifDiag
 
     ntype = type(name1)
     if type(name1) == type(""):
@@ -371,6 +371,7 @@ def subtract(name1,name2,col,branch=1,point=1,templates=None):
     first point on that branch within y or 'b.yyy', where m,n are in
     {1,2,3,...}.
     """
+    from auto import bifDiag
     ntype = type(name1)
     if type(name1) == type(""):
         name1 = filenameTemplate(name1,templates)
@@ -413,6 +414,7 @@ def append(name1,name2=None,templates=None):
     Type FUNC('xxx','yyy') to append existing data-files s.xxx, b.xxx,
     and d.xxx to data-files s.yyy, b.yyy, and d.yyy.
     """
+    from auto import bifDiag
     parsed1=None
     parsed2=None
     if isinstance(name1, bifDiag.bifDiag):
@@ -543,6 +545,7 @@ def save(name1,name2=None,templates=None):
     to b.xxx, s.xxx, d.xxx.  Existing files with these names will be
     overwritten.
     """
+    from auto import bifDiag
     parsed = None
     if not name2 is None:
         parsed = name1
@@ -612,6 +615,7 @@ commandDeleteDataFiles = command(delete,alias=['dl'])
 
 def deleteLabel(codes=None,name1=None,name2=None,templates=None,
                 keepTY=0,keep=0):
+    from auto import bifDiag
     if hasattr(codes,'deleteLabel'):
         origlen=len(codes())
         new = codes.deleteLabel(name1,keepTY=keepTY,keep=keep,copy=1)
@@ -1423,6 +1427,7 @@ def loadbd(name=None,templates=None,**kw):
 
     Returns a bifurcation diagram object representing the files in b.
     """
+    from auto import bifDiag
     def __applyBsdConfigResolveAbbreviation(**kw):
         abbrev = {}
         for key in ["bifurcationDiagram", "solution", "diagnostics"]:
@@ -1679,6 +1684,7 @@ def plot3(name=None,r3b=False):
     Type FUNC(...,r3b=True) to run PLAUT04 in restricted three body
     problem mode.
     """
+    from auto import bifDiag
     cmd = os.path.join(os.path.expandvars("$AUTO_DIR"),"bin")
     cmd = os.path.join(cmd, "plaut04")
     arg = []

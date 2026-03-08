@@ -5,7 +5,6 @@ from auto import AUTOutil
 from auto import parseB
 from auto import parseC
 from auto import parseH
-from auto import parseS
 from auto.AUTOSolution import AUTOSolution
 from auto import parseD
 from auto import Points
@@ -34,6 +33,7 @@ class bifDiag(parseB.parseBR):
                             constants)
 
     def __realinit(self,fort7_filename,fort8_filename,fort9_filename,constants):
+        from auto import parseS
         ioerrors = []
         try:
             parseB.parseBR.__init__(self,fort7_filename)
@@ -130,6 +130,7 @@ class bifDiag(parseB.parseBR):
         return "<_=%s instance at %#010x>"%(self.__class__.__name__,result)
 
     def getLabel(self,label):
+        from auto import parseS
         sols = parseS.parseS()
         #adjust maximum label/branch
         mbr = max([abs(d["BR"]) for d in self] or [None])
@@ -148,6 +149,7 @@ class bifDiag(parseB.parseBR):
         return self().load(**kw)
 
     def read(self,fort7_input,fort8_input=None,fort9_input=None):
+        from auto import parseS
         parseB.parseBR.read(self,fort7_input)
         for i, d in enumerate(self):
             self[i] = bifDiagBranch(d)
@@ -177,6 +179,7 @@ class bifDiag(parseB.parseBR):
                     d.diagnostics.write(fort9_output)
 
     def readFilename(self,fort7_filename,fort8_filename=None,fort9_filename=None):
+        from auto import parseS
         parseB.parseBR.readFilename(self,fort7_filename)
         for i, d in enumerate(self):
             self[i] = bifDiagBranch(d)
@@ -230,6 +233,7 @@ class bifDiagBranch(parseB.AUTOBranch):
         return super(bifDiagBranch, self).__getattr__(attr)
 
     def getLabel(self,label,mbr=None,mlab=None):
+        from auto import parseS
         sols = []
         for idx in self.labels.getIndices():
             x = self._gettypelabel(idx)[1]
