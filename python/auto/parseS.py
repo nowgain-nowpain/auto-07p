@@ -34,7 +34,6 @@ import copy
 from auto import parseB
 from auto import parseC
 from auto import Points
-from auto.AUTOSolution import AUTOSolution
 import gzip
 from auto import AUTOutil
 from auto.AUTOutil import format19_10E3
@@ -227,6 +226,7 @@ class parseS(list):
         """Load solution with the given AUTO constants.
         Returns a shallow copy with a copied set of updated constants
         """
+        from auto.AUTOSolution import AUTOSolution
         irs = kw.get("IRS")
         if irs is None:
             irs = (kw.get("constants") or {}).get("IRS")
@@ -254,6 +254,7 @@ class parseS(list):
     # and it will ignore a partially created solution.
     # Basically it for an VBM kind of program.
     def tryNextPointRead(self,inputfile):
+        from auto.AUTOSolution import AUTOSolution
         current_position = inputfile.tell()
         try:
             self.append(AUTOSolution(inputfile,name=inputfile.name))
@@ -262,6 +263,7 @@ class parseS(list):
 
     def read(self,inputfile=None):
         # We now go through the file and read the solutions.
+        from auto.AUTOSolution import AUTOSolution
         if inputfile is None:
             # read everything into memory
             for solution in self:

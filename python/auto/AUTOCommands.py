@@ -189,7 +189,7 @@ def us(name,templates=None):
     datfile = "%s.dat"%name
     info("(Required files : %s, %s, %s)\n"%(equation_file,cfile,
                                                  datfile))
-    import runAUTO
+    from . import runAUTO
     fconrun = runAUTO.runAUTO(makefile="$AUTO_DIR/cmds/cmds.make fcon")
     fconrun.config(e=name)
     fconrun.runMakefile(name)
