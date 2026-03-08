@@ -80,9 +80,10 @@ class AUTOSolution(UserDict,Points.Pointset):
             except ImportError:
                 fileS = None
 
-            if isinstance(input,(file,gzip.GzipFile)) and fileS is not None:
-                input = fileS(input)
-            if fileS is not None and isinstance(input,fileS):
+            self.fileS = fileS 
+            if isinstance(input,(file,gzip.GzipFile)) and self.fileS is not None:
+                input = self.fileS(input)
+            if self.fileS is not None and isinstance(input,self.fileS):
                 self.read(input,index)
             elif input is not None:
                 self.__readarray(input,t)
@@ -336,12 +337,12 @@ class AUTOSolution(UserDict,Points.Pointset):
         return runAUTO.runAUTO(selected_solution=self.load(**kw)).run()
 
     def readAllFilename(self,filename):
-        inputfile = fileS(filename)
+        inputfile = self.fileS(filename)
         self.readAll(inputfile)
         inputfile.close()
 
     def readFilename(self,filename):
-        inputfile = fileS(filename)
+        inputfile = self.fileS(filename)
         self.read(inputfile)
         inputfile.conditionalclose()
         # else don't close the input file but garbage collect
@@ -377,8 +378,8 @@ class AUTOSolution(UserDict,Points.Pointset):
             self.__input.readstr(self.__index)
             self.__input.conditionalclose()
             return
-        if not isinstance(inputfile, fileS):
-            inputfile = fileS(inputfile)
+        if not isinstance(inputfile, self.fileS):
+            inputfile = self.fileS(inputfile)
         self.__input = inputfile
         self.__index = index
         self.__readHeader()
