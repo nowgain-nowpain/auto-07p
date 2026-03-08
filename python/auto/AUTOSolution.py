@@ -399,14 +399,6 @@ class AUTOSolution(UserDict,Points.Pointset):
             c["IRS"] = self["LAB"]
         return AUTOSolution(self, constants=c, **datakw)
 
-    def run(self,**kw):
-        """Run AUTO.
-
-        Run AUTO from the solution with the given AUTO constants.
-        Returns a bifurcation diagram of the result.
-        """
-        from auto import runAUTO
-        return runAUTO.runAUTO(selected_solution=self.load(**kw)).run()
 
     def readAllFilename(self,filename):
         inputfile = self.fileS(filename)
