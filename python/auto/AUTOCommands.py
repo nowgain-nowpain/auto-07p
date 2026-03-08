@@ -1470,8 +1470,8 @@ def pr(parameter=None,runner=None):
     Type FUNC() to print all the parameters.
     Type FUNC('xxx') to return the parameter 'xxx'.
     These commands are equivalent to the commands
-    print s.c
-    print s.c['xxx']
+    print(s.c)
+    print(s.c['xxx'])
     where s is a solution.
     """
     runner = withrunner(runner)
@@ -1488,8 +1488,8 @@ def hpr(parameter=None,runner=None):
     Type FUNC() to print all the HomCont parameters.
     Type FUNC('xxx') to return the HomCont parameter 'xxx'.
     These commands are equivalent to the commands
-    print s.c
-    print s.c['xxx']
+    print(s.c)
+    print(s.c['xxx'])
     where s is a solution.
     """
     runner = withrunner(runner)
@@ -1546,7 +1546,7 @@ def run(data=None,sv=None,ap=None,runner=None,templates=None,**kw):
     AUTO constants or file keyword options.
     
     The results are stored in the bifurcation diagram r which you can
-    later print with ``print r'', obtain branches from via r[0], r[1], ...,
+    later print with ``print(r)'', obtain branches from via r[0], r[1], ...,
     and obtain solutions from via r(3), r(5), r('LP2'), where 3 and 5
     are label numbers, and 'LP2' refers to the second LP label.
 

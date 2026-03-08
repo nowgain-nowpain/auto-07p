@@ -2785,7 +2785,7 @@ w_reconstructed = pointsToPointset(pointlist, 't', wp['t'])"""
     print("-- OK!")
 
     print("\nCan iterate over points and pointsets:")
-    print("for p in wnp.bylabel('a'):\n  print p\n")
+    print("for p in wnp.bylabel('a'):\n  print(p)\n")
     for p in wnp.bylabel('a'):
         print(p)
 
