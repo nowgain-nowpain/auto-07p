@@ -34,6 +34,9 @@ import copy
 from auto import parseB
 from auto import parseC
 from auto import Points
+from auto.AUTOutil import format19_10E3
+from auto.parseCommon import AUTOParameters
+
 import gzip
 
 class AUTOSolution(UserDict,Points.Pointset):

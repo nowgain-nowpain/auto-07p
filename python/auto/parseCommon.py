@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-#from auto import AUTOExceptions
-#from auto import AUTOutil
 
 from auto import Points
 from auto.AUTOutil import format19_10E3
@@ -89,4 +87,4 @@ def AUTOatof(input_string):
             print(input_string)
             print("Setting to 0")
             return 0.0
-            
+
