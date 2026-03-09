@@ -1252,51 +1252,6 @@ class parseB(parseBMixin):
             self.coordnames = self.branches[0].coordnames
     def __repr__(self):
         return self.branches.__repr__()
-
-def AUTOatof(input_string):
-    #Sometimes AUTO messes up the output.  I.e. it gives an
-    #invalid floating point number of the form x.xxxxxxxE
-    #instead of x.xxxxxxxE+xx.  Here we assume the exponent
-    #is 0 and make it into a real real number :-)
-    try:
-        return float(input_string)
-    except ValueError:
-        try:
-            if not isinstance(input_string, str):
-                input_string = input_string.decode('ascii')
-            if input_string[-1] == "E":
-                #  This is the case where you have 0.0000000E
-                return float(input_string.strip()[0:-1])
-            if len(input_string) >= 5:
-                if input_string[-4] in ["-","+"]:
-                    #  This is the case where you have x.xxxxxxxxx-yyy
-                    #  or x.xxxxxxxxx+yyy (standard Fortran but not C)
-                    return float(input_string[:-4]+'E'+input_string[-4:])
-                if input_string[-4] == "D":
-                    #  This is the case where you have x.xxxxxxxxxD+yy
-                    #  or x.xxxxxxxxxD-yy (standard Fortran but not C)
-                    return float(input_string[:-4]+'E'+input_string[-3:])
-            input_string = input_string.replace("D","E")
-            input_string = input_string.replace("d","e")
-            try:
-                return float(input_string)
-            except ValueError:
-                i = input_string.find("-", 1)
-                if i == -1:
-                    i = input_string.find("+", 1)
-                if i != -1 and input_string[i-1] not in ["e", "E"]:
-                    # form x.xxx+yy or x.xxx-yy (standard Fortran but not C)
-                    return float(input_string[:i]+'E'+input_string[i:])
-            print("Encountered value I don't understand")
-            print(input_string)
-            print("Setting to 0")
-            return 0.0
-        except ValueError:
-            print("Encountered value which raises an exception while processing!!!")
-            print(input_string)
-            print("Setting to 0")
-            return 0.0
-            
             
 def pointtest(a,b):
     if "TY name" not in a:

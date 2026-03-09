@@ -1,10 +1,8 @@
 #! /usr/bin/env python
 # this is an enhanced list of bifurcation branches:
 # the labels contain the solutions and diagnostics as well
-from auto import AUTOutil
 from auto import parseB
 from auto import parseC
-from auto import parseH
 from auto.AUTOSolution import AUTOSolution
 from auto import parseD
 from auto import Points
@@ -306,38 +304,10 @@ class bifDiagBranch(parseB.AUTOBranch):
                 new.diagnostics = self.diagnostics
             return new
         parseB.AUTOBranch.relabel(self,old_label,new_label)
-    
-def pointtest7(a,b):
-    if "TY name" not in a:
-        raise AUTOExceptions.AUTORegressionError("No TY name label")
-    if "TY number" not in a:
-        raise AUTOExceptions.AUTORegressionError("No TY number label")
-    if "BR" not in a:
-        raise AUTOExceptions.AUTORegressionError("No BR label")
-    if "data" not in a:
-        raise AUTOExceptions.AUTORegressionError("No data label")
-    if "PT" not in a:
-        raise AUTOExceptions.AUTORegressionError("No PT label")
-    if "LAB" not in a:
-        raise AUTOExceptions.AUTORegressionError("No LAB label")
-    if len(a["data"]) != len(b["data"]):
-        raise AUTOExceptions.AUTORegressionError("Data sections have different lengths")
-   
-    
-def pointtest8(a,b):
-    keys = ['Type number', 'Type name',
-            'Free Parameters',  'Branch number', 'Parameter NULL vector',
-            'data', 'NCOL', 'Label', 'ISW', 'NTST',
-            'Point number', 'Parameters']
 
-    scratch=a['Parameters']
-    scratch=b['Parameters']
-    for key in keys:
-        if key not in a:
-            raise AUTOExceptions.AUTORegressionError("No %s label"%(key,))
-    if len(a["data"]) != len(b["data"]):
-        raise AUTOExceptions.AUTORegressionError("Data sections have different lengths")
 
+import pointtest7
+import pointtest8
 
 def test():
     foo = bifDiag()
