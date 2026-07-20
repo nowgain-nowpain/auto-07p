@@ -13,7 +13,7 @@ build-backend = "setuptools.build_meta"
 name = "auto_07p"
 version = "0.0.1"
 description = "AUTO-07p: continuation and bifurcation software for ODEs (Python CLI)"
-readme = { file = "README", content-type = "text/plain" }
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.8"
 dependencies = ["numpy"]
 
