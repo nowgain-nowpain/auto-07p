@@ -89,11 +89,11 @@ jobs:
         name: wheel-${{ matrix.os }}
         path: dist/*.whl
 
-  # CMake build lane: builds the core engine with CMake (instead of autotools)
-  # and runs the demo suite against the CMake-produced lib/. Keeps CMake at
-  # parity with the make build (refactor-plan.md W0). configure is still run
-  # to generate the CLI's cmds/cmds.make runtime config (CMake will absorb that
-  # in a later step); only the engine is built by CMake here.
+  # CMake build lane: builds the core engine AND every demo with CMake (instead
+  # of autotools, W6) in one shot, then runs the demo suite against the
+  # CMake-produced lib/. Keeps CMake at parity with the make build
+  # (refactor-plan.md W0). configure is still run to generate the CLI's
+  # cmds/cmds.make runtime config (CMake will absorb that in a later step).
   build-cmake:
     runs-on: ubuntu-24.04
     steps:
@@ -105,11 +105,13 @@ jobs:
         sudo apt-get install -y openmpi-bin libopenmpi-dev
     - name: Generate CLI config (cmds.make) via configure
       run: ./configure
-    - name: Build engine with CMake
+    - name: Build engine + all demos with CMake (one-shot, W6)
       run: |
-        # AUTO_BUILD_SHARED also produces lib/libauto.so (PIC) for the
-        # Python-callback path (W4), built alongside the loose lib/*.o.
-        cmake -S . -B build -DBUILD_DEMOS=OFF -DAUTO_BUILD_SHARED=ON
+        # One `cmake --build` produces the engine libraries, lib/libauto.so (PIC,
+        # for the W4 Python-callback path), the installable libauto.a (W5), AND
+        # every demo executable (BUILD_DEMOS) -- so a build break in any demo is
+        # caught here.
+        cmake -S . -B build -DBUILD_DEMOS=ON -DAUTO_BUILD_SHARED=ON
         cmake --build build -j
     - name: Run demo suite against the CMake-built lib/
       run: |
