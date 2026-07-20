@@ -34,6 +34,7 @@ class AUTOInteractive(object):
             # ship the legacy @-command scripts (W3, being obsoleted). Import
             # must still succeed; the @-aliases are simply unavailable.
             self.atcommands = []
+        self._atcommand_warned = False   # emit the @-deprecation notice once
 
     def showtraceback(self):
         try:
@@ -180,6 +181,11 @@ Aliases: auto ex"""
             if lst[0]=="shell":
                 command = "shell('"+line[llen+5:].strip()+"')"
             elif lst[0] in self.atcommands:
+                if not self._atcommand_warned:
+                    sys.stderr.write(
+                        "AUTO: the @-commands are deprecated; use the Python "
+                        "commands (run, load, save, ...) instead.\n")
+                    self._atcommand_warned = True
                 command = ("shell('" + os.path.join(
                         os.environ["AUTO_DIR"],"cmds",line.strip()) + "')")
             elif (lst[0] in shortUnixCommands or

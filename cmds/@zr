@@ -1,4 +1,5 @@
 #!/bin/sh
+echo "AUTO: the @-command scripts are deprecated and will be removed; use the 'auto' CLI or the Python commands (run, load, save, ...)." 1>&2
 echo " "
 echo " Zeroing small numbers in s.$1 ... "
 make -f "$AUTO_DIR"/util/Makefile zero

@@ -104,6 +104,13 @@ Goal: the CMake build must produce the **same libraries and same behavior** as t
 4. Produce a wheel in CI as an artifact.
 
 ### W3 — Obsolete `cmds/` (Goal 3) — final deletion gated by W4+W5
+**Status (2026-07-20):** steps 1–2 done — all 70 `@`-scripts print a stderr
+deprecation banner, the interactive console emits a one-time `@`-deprecation
+notice and no longer requires `cmds/` to exist, and [cmds/README.md](cmds/README.md)
+documents the `@`→Python mapping. Steps 3 & 5 (retire `cmds.make`, delete `cmds/`)
+are deferred: `cmds.make` remains the CLI's build-config source, and retiring it
+needs the CLI compile/link migrated off the `lib/*.o` glob to the installed
+`libauto` (W5) — a build-config change, separate from obsoleting the `@`-scripts.
 **Audit result:** the `demos/`/`test/` suites do **not** execute `@`-scripts (README/`autorc` mentions are documentation of old→new Python equivalents). The 70 `@`-scripts are thin shell wrappers with documented Python API equivalents — low-risk to shim/remove. The real couplings are two:
 - [interactiveBindings.py:29](python/auto/interactiveBindings.py#L29) enumerates `$AUTO_DIR/cmds` at runtime to generate the `@`-aliases.
 - [runAUTO.py:266](python/auto/runAUTO.py#L266) / [AUTOCommands.py:192](python/auto/AUTOCommands.py#L192) read `cmds/cmds.make` — the recipe that compiles user code. This is what **W4 (Python path) and W5 (C/C++ path)** replace, so removing `cmds.make` is gated by **both**.
