@@ -25,9 +25,15 @@ class AUTOInteractive(object):
         self.stopdemo = False
         self.oldhelp = __builtin__.help
         locals["help"] = self.help
-        self.atcommands = [cmd 
-                           for cmd in os.listdir(os.environ["AUTO_DIR"]+"/cmds")
-                           if cmd[0]=='@' and cmd[-1]!='~']
+        cmdsdir = os.path.join(os.environ.get("AUTO_DIR", ""), "cmds")
+        try:
+            self.atcommands = [cmd for cmd in os.listdir(cmdsdir)
+                               if cmd[0] == '@' and cmd[-1] != '~']
+        except OSError:
+            # No cmds/ directory -- e.g. an installed wheel (W4), which does not
+            # ship the legacy @-command scripts (W3, being obsoleted). Import
+            # must still succeed; the @-aliases are simply unavailable.
+            self.atcommands = []
 
     def showtraceback(self):
         try:

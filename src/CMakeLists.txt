@@ -74,7 +74,8 @@ set_target_properties(auto_c PROPERTIES
 # the autotools-parity lib/*.o layout are untouched.  Its own module dir keeps
 # its PIC .mod files from racing auto_engine's non-PIC ones.
 option(AUTO_BUILD_SHARED "Build libauto.so (PIC) for the Python callback path" OFF)
-if(AUTO_BUILD_SHARED)
+# Building the wheel (top-level BUILD_PYTHON) implies the shared engine.
+if(AUTO_BUILD_SHARED OR BUILD_PYTHON)
   add_library(auto SHARED ${AUTO_ENGINE_SOURCES} user_c.f90)
   set_target_properties(auto PROPERTIES
     POSITION_INDEPENDENT_CODE ON
@@ -84,4 +85,14 @@ if(AUTO_BUILD_SHARED)
   target_include_directories(auto PRIVATE "${CMAKE_SOURCE_DIR}/include")
   target_compile_options(auto PRIVATE ${AUTO_FFLAGS})
   target_link_options(auto PRIVATE -fopenmp)
+
+  # For the wheel: also drop libauto.so into the package tree so setuptools
+  # bundles it as package data (auto.callback.find_library() then locates it
+  # in-package -- no AUTO_DIR needed at runtime).
+  if(BUILD_PYTHON)
+    add_custom_command(TARGET auto POST_BUILD
+      COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+              "$<TARGET_FILE:auto>" "${CMAKE_SOURCE_DIR}/python/auto/libauto.so"
+      COMMENT "Bundling libauto.so into python/auto/ for the wheel")
+  endif()
 endif()

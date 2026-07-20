@@ -29,5 +29,7 @@ package-dir = { "" = "python" }
 where = ["python"]
 
 [tool.setuptools.package-data]
-# Data used by the module self-tests (parseBandS.test / bifDiag.test).
-auto = ["test_data/*"]
+# Data used by the module self-tests (parseBandS.test / bifDiag.test), plus the
+# compiled engine bundled by the CMake BUILD_PYTHON target (W4 step 6) so the
+# wheel is self-contained -- auto.callback loads it with no AUTO_DIR needed.
+auto = ["test_data/*", "libauto.so"]
