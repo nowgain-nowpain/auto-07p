@@ -272,9 +272,11 @@ class runAUTO:
         except ImportError:
             compilers = None
         for key in var:
-            v = getattr(compilers, key, "") if compilers is not None else ""
-            if v:
-                var[key] = v
+            # the generated module is authoritative when present -- use its value
+            # even if empty (e.g. OPT=""); fall back to the default only when the
+            # module or attribute is absent. Environment always wins.
+            if compilers is not None and hasattr(compilers, key):
+                var[key] = getattr(compilers, key)
             if os.environ.get(key):
                 var[key] = os.environ[key]
         # user equations include <auto_f2c.h> / auto.h from the engine headers
