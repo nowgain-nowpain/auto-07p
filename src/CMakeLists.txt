@@ -63,3 +63,25 @@ target_compile_options(auto_c PRIVATE ${AUTO_FFLAGS})
 set_target_properties(auto_c PROPERTIES
   OUTPUT_NAME auto_c
   ARCHIVE_OUTPUT_DIRECTORY "${LIB_DIR}")
+
+# --- Optional PIC shared engine: libauto.so for the Python/ctypes path (W4) --
+# A position-independent build of the whole engine PLUS user_c.f90 (the
+# func/stpnt/... dispatchers, the `user` table, and the runtime setters), with
+# NO compiled equation object.  With no C `const user` to win at link, the
+# Fortran `user` module variable is the (mutable) definition that Python fills
+# at runtime via auto_set_user().  It exports auto_main_c / auto_set_user /
+# auto_reset_user.  Opt-in (-DAUTO_BUILD_SHARED=ON): the default CLI build and
+# the autotools-parity lib/*.o layout are untouched.  Its own module dir keeps
+# its PIC .mod files from racing auto_engine's non-PIC ones.
+option(AUTO_BUILD_SHARED "Build libauto.so (PIC) for the Python callback path" OFF)
+if(AUTO_BUILD_SHARED)
+  add_library(auto SHARED ${AUTO_ENGINE_SOURCES} user_c.f90)
+  set_target_properties(auto PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    OUTPUT_NAME auto
+    Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/modules_shared"
+    LIBRARY_OUTPUT_DIRECTORY "${LIB_DIR}")
+  target_include_directories(auto PRIVATE "${CMAKE_SOURCE_DIR}/include")
+  target_compile_options(auto PRIVATE ${AUTO_FFLAGS})
+  target_link_options(auto PRIVATE -fopenmp)
+endif()
