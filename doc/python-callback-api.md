@@ -208,6 +208,13 @@ class _Registry:
 - **Reentrancy / repeated runs.** The engine uses COMMON blocks + module globals and may call
   `stop`/`exit`. Prove clean re-init before promising repeated in-process `run()`s; convert
   `stop`/`exit` to return codes so the Python/Jupyter host survives. Fallback: subprocess-per-run.
+  *Spike result (W4 step 4):* repeated in-process `auto_main_c()` calls on well-formed inputs
+  now work and are bit-for-bit reproducible, after fixing the one concrete blocker — the
+  constants unit (`fort.2`) was left open across calls, so `AUTO_MAIN` now `CLOSE`s it
+  ([main.f90](../src/main.f90)). The module-global allocatables are already cleaned per run
+  (`INIT`/`CLEANUP`). **Still open:** error paths call `AUTOSTOP` → `STOP`, which kills the
+  host process; a malformed run is therefore not recoverable in-process yet. Convert those to
+  return codes (or use subprocess-per-run) before exposing untrusted/edited inputs.
 - **Callback overhead.** One Python call per residual evaluation, many per continuation.
   Micro-benchmark early; offer a `numba`/compiled fast path later if needed.
 - **GIL.** Callbacks run under the GIL; fine for single-threaded runs. Revisit if the engine

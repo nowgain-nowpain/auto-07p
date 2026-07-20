@@ -82,6 +82,11 @@
           CALL CLEANUP()
           IF(KEYS)EXIT
        ENDDO
+       ! Close the constants unit so a later in-process call to AUTO_MAIN
+       ! (via auto_main_c, W4) re-reads fort.2 from the start instead of
+       ! finding unit 2 still connected at end-of-file.  (UNITC==5 is stdin;
+       ! leave it alone.)  Harmless for the executable, which ends here anyway.
+       IF(UNITC==2)CLOSE(UNITC)
        CALL MPIEND()
 
  301  FORMAT(/,' Total Time ',E12.3)

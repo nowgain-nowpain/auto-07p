@@ -247,6 +247,22 @@ class Registry:
         self._keep = []
         self._ufl = None
 
+    def run(self):
+        """Run one continuation from the AUTO constants in ./fort.2.
+
+        Reads the constants file (fort.2) and any restart data from the current
+        working directory -- exactly as the executable does -- and writes the
+        b/s/d output to fort.7/8/9.  Callbacks must be register()ed first.
+        Returns the engine exit code (0 on success).
+
+        Repeated in-process runs of *well-formed* inputs are supported (the
+        engine re-reads fort.2 from the start each call).  Caveat (W4): a
+        malformed constants file or other engine error path still triggers
+        AUTOSTOP, which calls STOP and terminates the host process; converting
+        those to return codes is deferred.
+        """
+        return self.lib.auto_main_c()
+
 
 # ---- 6. Self-test (no engine run needed) -----------------------------------
 def _selftest():
