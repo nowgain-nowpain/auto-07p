@@ -20,8 +20,11 @@ wired up in a later W4 step; this module provides the registration ABI and is
 independently verifiable via `python -m auto.callback` (`_selftest`).
 """
 
+import contextlib
 import ctypes
 import os
+import sys
+import tempfile
 from ctypes import (CFUNCTYPE, POINTER, Structure, byref, c_double, c_int)
 
 # NPARX: compile-time PARAMETER in include/auto.h (= 36).  `par` arrays are
@@ -193,6 +196,10 @@ def load_engine(path=None):
     if _np is None:
         raise ImportError(
             "numpy is required for the AUTO callback layer") from _NUMPY_ERR
+    # Make libgfortran's preconnected units (unit 6 = stdout, unit 0 = stderr)
+    # unbuffered so capture_output() sees engine writes immediately.  Read by
+    # libgfortran on first Fortran I/O; setdefault lets the user override.
+    os.environ.setdefault("GFORTRAN_UNBUFFERED_PRECONNECTED", "y")
     lib = ctypes.CDLL(path or find_library())
     lib.auto_set_user.argtypes = [POINTER(UserFunctionList)]
     lib.auto_set_user.restype = None
@@ -201,6 +208,56 @@ def load_engine(path=None):
     lib.auto_main_c.argtypes = []
     lib.auto_main_c.restype = c_int
     return lib
+
+
+# ---- 4b. Capturing the engine's Fortran output -----------------------------
+class _Capture:
+    """Holds text captured by capture_output(); populated when the block exits."""
+    __slots__ = ("text",)
+
+    def __init__(self):
+        self.text = ""
+
+
+@contextlib.contextmanager
+def capture_output():
+    """Capture the engine's C-level stdout(1)/stderr(2) for the block's duration.
+
+    The Fortran engine writes its progress table via `WRITE(6, ...)`, which goes
+    to file descriptor 1 and bypasses `sys.stdout` entirely -- so in a notebook
+    it leaks to the kernel's terminal (or is lost).  This redirects fds 1 and 2
+    to a temporary file with `os.dup2` for the duration, then restores them and
+    exposes what was written.
+
+    Yields a `_Capture` whose `.text` holds the output after the block::
+
+        with capture_output() as out:
+            reg.run()
+        print(out.text)            # the engine's b-diagram summary, etc.
+
+    Pair with load_engine() (which requests unbuffered preconnected units) so
+    nothing is left in libgfortran's buffers when the fds are restored.
+    """
+    cap = _Capture()
+    sys.stdout.flush()
+    sys.stderr.flush()
+    saved1, saved2 = os.dup(1), os.dup(2)
+    tf = tempfile.TemporaryFile(mode="w+")
+    try:
+        os.dup2(tf.fileno(), 1)
+        os.dup2(tf.fileno(), 2)
+        yield cap
+    finally:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os.dup2(saved1, 1)
+        os.close(saved1)
+        os.dup2(saved2, 2)
+        os.close(saved2)
+        tf.flush()
+        tf.seek(0)
+        cap.text = tf.read()
+        tf.close()
 
 
 # ---- 5. Registry -----------------------------------------------------------
