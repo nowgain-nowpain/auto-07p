@@ -133,3 +133,9 @@ jobs:
         export AUTO_DIR="$PWD"
         export OMPI_MCA_btl="^openib"
         python3 test/test_pycallback.py
+    - name: Run C-link demo test (installable engine, W5)
+      run: |
+        # Installs the engine to a temp prefix and builds a C equation against
+        # it via find_package(AUTO) (-lauto -lauto_c, no lib/*.o glob), runs it,
+        # and checks the b-file matches the compiled Fortran demo.
+        sh test/test_clink.sh
