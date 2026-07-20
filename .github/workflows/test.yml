@@ -88,3 +88,38 @@ jobs:
       with:
         name: wheel-${{ matrix.os }}
         path: dist/*.whl
+
+  # CMake build lane: builds the core engine with CMake (instead of autotools)
+  # and runs the demo suite against the CMake-produced lib/. Keeps CMake at
+  # parity with the make build (refactor-plan.md W0). configure is still run
+  # to generate the CLI's cmds/cmds.make runtime config (CMake will absorb that
+  # in a later step); only the engine is built by CMake here.
+  build-cmake:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gfortran cmake python3-matplotlib
+        sudo apt-get install -y openmpi-bin libopenmpi-dev
+    - name: Generate CLI config (cmds.make) via configure
+      run: ./configure
+    - name: Build engine with CMake
+      run: |
+        cmake -S . -B build -DBUILD_DEMOS=OFF
+        cmake --build build -j
+    - name: Run demo suite against the CMake-built lib/
+      run: |
+        export OMPI_MCA_btl="^openib"
+        cd test
+        python3 ../python/auto all.auto
+        mv *_log07p cmake-python3log.txt
+    - uses: actions/upload-artifact@v4
+      with:
+        name: cmake-python3log
+        path: test/cmake-python3log.txt
+    - uses: actions/upload-artifact@v4
+      with:
+        name: cmake-verification
+        path: test/verification
