@@ -36,23 +36,6 @@ jobs:
         brew install basictex fig2dev
         brew install python-tk
         brew install python-matplotlib
-        brew install pyenv
-        pyenv install 2.7.18
-        pyenv global 2.7.18
-        PATH=$(pyenv root)/shims:$PATH
-        pip install numpy==1.16.6
-        # workaround for freetype compilation error
-        brew unlink freetype
-        curl -L https://raw.githubusercontent.com/Homebrew/homebrew-core/d28afc3bfdb5d24eab02157bfffcc9e17ed6666c/Formula/f/freetype.rb > freetype.rb
-        brew install freetype.rb
-        pip install matplotlib
-    - name: Install packages for Ubuntu 22.04 only
-      if: matrix.os == 'ubuntu-22.04'
-      run: |
-        sudo apt-get install python-tk
-        curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-        sudo python2 get-pip.py
-        pip2 install numpy
     - name: Compile
       run: |
         # compile auto
@@ -63,25 +46,6 @@ jobs:
         make
         # compile manual
         make -C doc auto.pdf ../plaut04/doc/userguide.pdf
-        touch test/python2log.txt
-    - name: Run test (python2)
-      if: matrix.os != 'ubuntu-24.04'
-      run: |
-        if [ "$RUNNER_OS" == "macOS" ]; then
-          PATH=$(pyenv root)/shims:$PATH
-        fi
-        export OMPI_MCA_btl="^openib"
-        cd test
-        python2 ../python/auto all.auto
-        mv *_log07p python2log.txt
-    - uses: actions/upload-artifact@v4
-      with:
-        name: python2log-${{ matrix.os }}
-        path: test/python2log.txt
-    - uses: actions/upload-artifact@v4
-      with:
-        name: python2verification-${{ matrix.os }}
-        path: test/verification
     - name: Run test (python3)
       run: |
         export OMPI_MCA_btl="^openib"
