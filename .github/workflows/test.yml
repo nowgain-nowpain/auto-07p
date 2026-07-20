@@ -80,3 +80,11 @@ jobs:
       with:
         name: python3mpiverification-${{ matrix.os }}
         path: test/verification
+    - name: Build wheel
+      run: |
+        python3 -m pip install --upgrade build
+        python3 -m build --wheel
+    - uses: actions/upload-artifact@v4
+      with:
+        name: wheel-${{ matrix.os }}
+        path: dist/*.whl
