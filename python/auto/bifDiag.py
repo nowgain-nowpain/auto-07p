@@ -306,10 +306,9 @@ class bifDiagBranch(parseB.AUTOBranch):
         parseB.AUTOBranch.relabel(self,old_label,new_label)
 
 
-import pointtest7
-import pointtest8
-
 def test():
+    from auto.pointtest7 import pointtest7
+    from auto.pointtest8 import pointtest8
     foo = bifDiag()
     foo.readFilename("test_data/fort.7","test_data/fort.8")
     if len(foo[0]) != 150:

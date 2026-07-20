@@ -138,10 +138,9 @@ class parseBandS:
         return self.diagram.getLabels()
 
 
-import pointtest7
-import pointtest8
-
 def test():
+    from auto.pointtest7 import pointtest7
+    from auto.pointtest8 import pointtest8
     foo = parseBandS()
     foo.readFilename("test_data/fort.7","test_data/fort.8")
     if len(foo.diagram) != 150:
