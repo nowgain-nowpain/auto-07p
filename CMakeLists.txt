@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(AUTO07p C CXX Fortran)
+project(AUTO07p VERSION 0.0.1 LANGUAGES C CXX Fortran)
 
 # --- Build options ----------------------------------------------------------
 option(BUILD_DOCUMENTATION "Build the project documentation" OFF)

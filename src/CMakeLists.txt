@@ -75,24 +75,99 @@ set_target_properties(auto_c PROPERTIES
 # its PIC .mod files from racing auto_engine's non-PIC ones.
 option(AUTO_BUILD_SHARED "Build libauto.so (PIC) for the Python callback path" OFF)
 # Building the wheel (top-level BUILD_PYTHON) implies the shared engine.
+# Target name auto_shared (file: libauto.so) -- the ergonomic name `auto` is the
+# static engine below (AUTO::auto), which is what C/C++ users link (W5).
 if(AUTO_BUILD_SHARED OR BUILD_PYTHON)
-  add_library(auto SHARED ${AUTO_ENGINE_SOURCES} user_c.f90)
-  set_target_properties(auto PROPERTIES
+  add_library(auto_shared SHARED ${AUTO_ENGINE_SOURCES} user_c.f90)
+  set_target_properties(auto_shared PROPERTIES
     POSITION_INDEPENDENT_CODE ON
     OUTPUT_NAME auto
     Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/modules_shared"
     LIBRARY_OUTPUT_DIRECTORY "${LIB_DIR}")
-  target_include_directories(auto PRIVATE "${CMAKE_SOURCE_DIR}/include")
-  target_compile_options(auto PRIVATE ${AUTO_FFLAGS})
-  target_link_options(auto PRIVATE -fopenmp)
+  target_include_directories(auto_shared PRIVATE "${CMAKE_SOURCE_DIR}/include")
+  target_compile_options(auto_shared PRIVATE ${AUTO_FFLAGS})
+  target_link_options(auto_shared PRIVATE -fopenmp)
 
   # For the wheel: also drop libauto.so into the package tree so setuptools
   # bundles it as package data (auto.callback.find_library() then locates it
   # in-package -- no AUTO_DIR needed at runtime).
   if(BUILD_PYTHON)
-    add_custom_command(TARGET auto POST_BUILD
+    add_custom_command(TARGET auto_shared POST_BUILD
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-              "$<TARGET_FILE:auto>" "${CMAKE_SOURCE_DIR}/python/auto/libauto.so"
+              "$<TARGET_FILE:auto_shared>" "${CMAKE_SOURCE_DIR}/python/auto/libauto.so"
       COMMENT "Bundling libauto.so into python/auto/ for the wheel")
   endif()
 endif()
+
+# ============================================================================
+# Installable engine for C/C++ users (refactor-plan.md W5, Goal 9)
+# ----------------------------------------------------------------------------
+# The successor to linking `$AUTO_DIR/lib/*.o`.  Mirrors the cmds.make model
+# exactly, replacing the object glob with real libraries:
+#     Fortran equation:  gfortran eqn.o -lauto
+#     C equation:        gfortran eqn.o -lauto -lauto_c
+# libauto.a is the engine as one static archive (same objects as lib/*.o --
+# engine core + main.o = PROGRAM AUTO; NOT user_c, NOT fcon), reusing the
+# already-compiled auto_engine objects.  libauto_c.a (target auto_c, above) is
+# the C-interface dispatcher archive.
+add_library(auto STATIC $<TARGET_OBJECTS:auto_engine>)
+add_dependencies(auto auto_engine)
+set_target_properties(auto PROPERTIES
+  OUTPUT_NAME auto
+  ARCHIVE_OUTPUT_DIRECTORY "${LIB_DIR}")
+
+include(GNUInstallDirs)
+
+# Interface include dir so downstream `#include <auto_f2c.h>` resolves against
+# the installed headers (installed to <prefix>/include/auto).
+target_include_directories(auto INTERFACE
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/auto>)
+target_include_directories(auto_c INTERFACE
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/auto>)
+# The engine is built with OpenMP; propagate -fopenmp so downstream links libgomp.
+target_link_options(auto INTERFACE -fopenmp)
+
+set(AUTO_PUBLIC_HEADERS
+  "${CMAKE_SOURCE_DIR}/include/auto_f2c.h"   # C equation interface
+  "${CMAKE_SOURCE_DIR}/include/auto.h"       # NPARX and engine constants
+  "${CMAKE_SOURCE_DIR}/include/fcon.h")      # fcon converter interface
+
+install(TARGETS auto auto_c
+        EXPORT AUTOTargets
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+install(FILES ${AUTO_PUBLIC_HEADERS}
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/auto")
+# The shared engine (libauto.so) is deliberately NOT installed into the system
+# libdir: with libauto.a beside it, `-lauto` would pick the .so, and a compiled
+# equation's `const user` cannot override the .so's own `user` without
+# -rdynamic -- so the C link path must resolve `user` statically. The shared
+# engine is instead distributed inside the Python wheel (W4).
+
+# CMake package config: downstream `find_package(AUTO)` -> AUTO::auto / AUTO::auto_c.
+install(EXPORT AUTOTargets
+        FILE AUTOTargets.cmake
+        NAMESPACE AUTO::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/AUTO")
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  "${CMAKE_SOURCE_DIR}/cmake/AUTOConfig.cmake.in"
+  "${CMAKE_BINARY_DIR}/AUTOConfig.cmake"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/AUTO")
+write_basic_package_version_file(
+  "${CMAKE_BINARY_DIR}/AUTOConfigVersion.cmake"
+  VERSION "${PROJECT_VERSION}"
+  COMPATIBILITY SameMajorVersion)
+install(FILES
+  "${CMAKE_BINARY_DIR}/AUTOConfig.cmake"
+  "${CMAKE_BINARY_DIR}/AUTOConfigVersion.cmake"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/AUTO")
+
+# pkg-config: `pkg-config --cflags --libs auto` for plain Makefile users.
+set(PKGCONFIG_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}")
+set(PKGCONFIG_INCLUDEDIR "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
+configure_file(
+  "${CMAKE_SOURCE_DIR}/cmake/auto.pc.in"
+  "${CMAKE_BINARY_DIR}/auto.pc" @ONLY)
+install(FILES "${CMAKE_BINARY_DIR}/auto.pc"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
