@@ -101,13 +101,15 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y gfortran cmake python3-matplotlib
+        sudo apt-get install -y gfortran cmake python3-matplotlib python3-numpy
         sudo apt-get install -y openmpi-bin libopenmpi-dev
     - name: Generate CLI config (cmds.make) via configure
       run: ./configure
     - name: Build engine with CMake
       run: |
-        cmake -S . -B build -DBUILD_DEMOS=OFF
+        # AUTO_BUILD_SHARED also produces lib/libauto.so (PIC) for the
+        # Python-callback path (W4), built alongside the loose lib/*.o.
+        cmake -S . -B build -DBUILD_DEMOS=OFF -DAUTO_BUILD_SHARED=ON
         cmake --build build -j
     - name: Run demo suite against the CMake-built lib/
       run: |
@@ -123,3 +125,11 @@ jobs:
       with:
         name: cmake-verification
         path: test/verification
+    - name: Run Python-callback demos (no-compile path, W4)
+      run: |
+        # Runs each demos/pycallback/*.py two ways -- Python callbacks via
+        # lib/libauto.so vs the compiled <name>.f90 + lib/*.o -- and checks the
+        # b-files match. Needs libauto.so (built above) and gfortran (present).
+        export AUTO_DIR="$PWD"
+        export OMPI_MCA_btl="^openib"
+        python3 test/test_pycallback.py
