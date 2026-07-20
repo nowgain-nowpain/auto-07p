@@ -92,8 +92,9 @@ jobs:
   # CMake build lane: builds the core engine AND every demo with CMake (instead
   # of autotools, W6) in one shot, then runs the demo suite against the
   # CMake-produced lib/. Keeps CMake at parity with the make build
-  # (refactor-plan.md W0). configure is still run to generate the CLI's
-  # cmds/cmds.make runtime config (CMake will absorb that in a later step).
+  # (refactor-plan.md W0). No ./configure needed: CMake generates the CLI's
+  # build config (python/auto/compilers.py) directly, and the CLI links
+  # lib/libauto.a instead of the old cmds.make/lib/*.o glob (W3).
   build-cmake:
     runs-on: ubuntu-24.04
     steps:
@@ -103,8 +104,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gfortran cmake python3-matplotlib python3-numpy
         sudo apt-get install -y openmpi-bin libopenmpi-dev
-    - name: Generate CLI config (cmds.make) via configure
-      run: ./configure
     - name: Build engine + all demos with CMake (one-shot, W6)
       run: |
         # One `cmake --build` produces the engine libraries, lib/libauto.so (PIC,

@@ -1,8 +1,0 @@
-#!/bin/sh
-echo "AUTO: the @-command scripts are deprecated and will be removed; use the 'auto' CLI or the Python commands (run, load, save, ...)." 1>&2
-cat fort.7 > b.$1
-cat fort.8 > s.$1
-cat fort.9 > d.$1
-echo "Saving fort.7 as b.$1 ... done" 
-echo "Saving fort.8 as s.$1 ... done" 
-echo "Saving fort.9 as d.$1 ... done" 

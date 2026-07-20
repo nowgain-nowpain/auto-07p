@@ -25,16 +25,6 @@ class AUTOInteractive(object):
         self.stopdemo = False
         self.oldhelp = __builtin__.help
         locals["help"] = self.help
-        cmdsdir = os.path.join(os.environ.get("AUTO_DIR", ""), "cmds")
-        try:
-            self.atcommands = [cmd for cmd in os.listdir(cmdsdir)
-                               if cmd[0] == '@' and cmd[-1] != '~']
-        except OSError:
-            # No cmds/ directory -- e.g. an installed wheel (W4), which does not
-            # ship the legacy @-command scripts (W3, being obsoleted). Import
-            # must still succeed; the @-aliases are simply unavailable.
-            self.atcommands = []
-        self._atcommand_warned = False   # emit the @-deprecation notice once
 
     def showtraceback(self):
         try:
@@ -180,14 +170,6 @@ Aliases: auto ex"""
         elif len(lst) == 1 or lst[1][0] != '(':
             if lst[0]=="shell":
                 command = "shell('"+line[llen+5:].strip()+"')"
-            elif lst[0] in self.atcommands:
-                if not self._atcommand_warned:
-                    sys.stderr.write(
-                        "AUTO: the @-commands are deprecated; use the Python "
-                        "commands (run, load, save, ...) instead.\n")
-                    self._atcommand_warned = True
-                command = ("shell('" + os.path.join(
-                        os.environ["AUTO_DIR"],"cmds",line.strip()) + "')")
             elif (lst[0] in shortUnixCommands or
                   (lst[0] in shortDuplCommands and
                    (len(lst) != 2 or (len(lst) == 2 and lst[1][0] == '-')))):

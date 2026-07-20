@@ -39,6 +39,17 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/modules")
 # Match the autotools flags (src build used: gfortran -g -fopenmp -O).
 set(AUTO_FFLAGS -g -fopenmp -O)
 
+# Generate the CLI's build-config module (replaces cmds.make; W3): the compiler
+# and flags runAUTO uses to compile user equations. Written into the package.
+string(REPLACE ";" " " AUTO_CFG_FFLAGS "${AUTO_FFLAGS}")
+set(AUTO_CFG_CC "${CMAKE_C_COMPILER}")
+set(AUTO_CFG_FC "${CMAKE_Fortran_COMPILER}")
+set(AUTO_CFG_CFLAGS "")
+set(AUTO_CFG_OPT "")
+configure_file(
+  "${CMAKE_SOURCE_DIR}/cmake/compilers.py.in"
+  "${CMAKE_SOURCE_DIR}/python/auto/compilers.py" @ONLY)
+
 # --- Engine as an OBJECT library -> the loose lib/*.o the CLI globs ----------
 add_library(auto_engine OBJECT ${AUTO_ENGINE_SOURCES})
 target_include_directories(auto_engine PRIVATE "${CMAKE_SOURCE_DIR}/include")

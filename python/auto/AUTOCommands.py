@@ -189,7 +189,7 @@ def us(name,templates=None):
     info("(Required files : %s, %s, %s)\n"%(equation_file,cfile,
                                                  datfile))
     from . import runAUTO
-    fconrun = runAUTO.runAUTO(makefile="$AUTO_DIR/cmds/cmds.make fcon")
+    fconrun = runAUTO.runAUTO(makefile="fcon")
     fconrun.config(e=name)
     fconrun.runMakefile(name)
     if os.path.exists(cfile):

@@ -1,8 +1,0 @@
-#!/bin/sh
-echo "AUTO: the @-command scripts are deprecated and will be removed; use the 'auto' CLI or the Python commands (run, load, save, ...)." 1>&2
-rm -r b.$1 
-rm -r s.$1 
-rm -r d.$1
-echo "Deleting b.$1 ... done"
-echo "Deleting s.$1 ... done"
-echo "Deleting d.$1 ... done"
