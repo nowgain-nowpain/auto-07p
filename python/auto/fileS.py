@@ -141,8 +141,8 @@ class fileS(object):
             if "D".encode("ascii") not in data:
                 fdata = fromstring(data, dtype=float, sep=' ')
             if fdata.tolist() == [] or len(fdata) != total:
-                fdata = N.array(map(parseB.AUTOatof,
-                                    data.split()), 'd')
+                fdata = N.array(list(map(parseB.AUTOatof,
+                                    data.split())), 'd')
             else:
                 #make sure the last element is correct
                 #(fromstring may not do this correctly for a
@@ -152,9 +152,9 @@ class fileS(object):
         else:
             data = data.split()
             try:
-                fdata = N.array(map(float, data), 'd')
+                fdata = N.array(list(map(float, data)), 'd')
             except ValueError:
-                fdata = N.array(map(parseB.AUTOatof, data), 'd')
+                fdata = N.array(list(map(parseB.AUTOatof, data)), 'd')
         if total != len(fdata):
             raise PrematureEndofData
         del self.solutions[i]['data']

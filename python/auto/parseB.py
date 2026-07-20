@@ -325,7 +325,7 @@ class AUTOBranch(parseBMixin, Points.Pointset):
             if "D" not in datalist:
                 data = fromstring(datalist, dtype=float, sep=' ')
             if len(data) != nrows * ncolumns:
-                data = N.array(map(AUTOatof,datalist.split()), 'd')
+                data = N.array(list(map(AUTOatof,datalist.split())), 'd')
             else:
                 #make sure the last element is correct
                 #(fromstring may not do this correctly for a
@@ -334,9 +334,9 @@ class AUTOBranch(parseBMixin, Points.Pointset):
         else: #array
             datalist = datalist.split()
             try:
-                data = N.array(map(float, datalist), 'd')
+                data = N.array(list(map(float, datalist)), 'd')
             except ValueError:
-                data = N.array(map(AUTOatof, datalist), 'd')
+                data = N.array(list(map(AUTOatof, datalist)), 'd')
         data.shape = (-1,ncolumns)
         coordarray = N.transpose(data[:,4:]).copy()
         points = data[:,1]
