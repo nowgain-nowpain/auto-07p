@@ -582,7 +582,7 @@ class Point(object):
                 return [self._name_ix_map[n] for n in namelist]
         except KeyError:
             e = sys.exc_info()[1]
-            import AUTOExceptions
+            from auto import AUTOExceptions
             raise AUTOExceptions.AUTORuntimeError("Name not found: "+str(e))
 
 

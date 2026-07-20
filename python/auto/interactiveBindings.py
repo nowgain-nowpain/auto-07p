@@ -55,7 +55,7 @@ class AUTOInteractive(object):
     will proceed each time you press Enter.
 
 Aliases: demofile dmf"""
-        import AUTOclui
+        from auto import AUTOclui
         AUTOInteractiveConsole(AUTOclui.exportFunctions())._demofile(name)
 
     def _demofile(self,name):
@@ -140,7 +140,7 @@ Aliases: auto ex"""
     Type auto('xxx.auto') to run the script xxx.auto.
 
 Aliases: auto ex"""
-        import AUTOclui
+        from auto import AUTOclui
         if name is not None:
             AUTOInteractiveConsole(AUTOclui.exportFunctions()).execfile(name)
         else:
@@ -359,7 +359,7 @@ def _quicktest():
     _testFilename("../demos/python/fullTest.auto","test_data/fullTest.log")
     
 def _testFilename(inputname,outputname):
-    import AUTOclui, AUTOutil, runAUTO
+    from auto import AUTOclui, AUTOutil, runAUTO
     old_path = os.getcwd()
     log = open("log","w")
 
@@ -498,7 +498,7 @@ man     -> List of AUTO CLUI commands"""]
     ipshell.mainloop(banner = '\n'.join(banner))
 
 def automain(name=None):
-    import AUTOclui
+    from auto import AUTOclui
     sys.ps1="AUTO> "    
     opts_list,args=getopt.getopt(sys.argv[1:],"c:diqtT:L:")
     opts={}
