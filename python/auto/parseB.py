@@ -22,6 +22,7 @@ import sys
 from auto import AUTOExceptions
 from auto import AUTOutil
 from auto.AUTOutil import format19_10E3
+from auto.parseCommon import AUTOatof
 try:
     from UserList import UserList
 except ImportError: # Python 3
