@@ -15,3 +15,7 @@ set_target_properties(plaut PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin"
   Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/modules")
 target_compile_options(plaut PRIVATE -O)
+
+# Package: install the executable (cmake --install).
+include(GNUInstallDirs)
+install(TARGETS plaut RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")

@@ -45,3 +45,12 @@ target_link_libraries(plaut04 PRIVATE
 # Deposit alongside the autotools build's output (AUTO_DIR/bin).
 set_target_properties(plaut04 PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+
+# Package: install the executable plus its runtime resources (config .rc files
+# and the widgets/ assets it loads), matching the autotools install.
+include(GNUInstallDirs)
+install(TARGETS plaut04 RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(FILES plaut04.rc r3bplaut04.rc
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/auto/plaut04")
+install(DIRECTORY widgets
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/auto/plaut04")
