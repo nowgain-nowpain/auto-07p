@@ -1824,6 +1824,11 @@ try:
                 _root=root
             except:
                 pass
+        # imported locally (like the other commands here) to avoid a cyclic
+        # import with bifDiag; without this, plotting a result raises
+        # NameError: name 'bifDiag' is not defined (only reached when matplotlib
+        # is present, i.e. in CI).
+        from auto import bifDiag
         if parsed:
             nb, ns = None, None
             if isinstance(parsed,bifDiag.bifDiag):

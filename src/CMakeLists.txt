@@ -41,11 +41,14 @@ set(AUTO_FFLAGS -g -fopenmp -O)
 
 # Generate the CLI's build-config module (replaces cmds.make; W3): the compiler
 # and flags runAUTO uses to compile user equations. Written into the package.
-string(REPLACE ";" " " AUTO_CFG_FFLAGS "${AUTO_FFLAGS}")
+# Flags mirror what ./configure sets for the autotools build (the baseline), so
+# a demo compiles identically under either build system -- in particular C
+# equations get -O2 (not -O0).
 set(AUTO_CFG_CC "${CMAKE_C_COMPILER}")
 set(AUTO_CFG_FC "${CMAKE_Fortran_COMPILER}")
-set(AUTO_CFG_CFLAGS "")
-set(AUTO_CFG_OPT "")
+set(AUTO_CFG_CFLAGS "-g -O2")
+set(AUTO_CFG_FFLAGS "-g -fopenmp")
+set(AUTO_CFG_OPT "-O")
 configure_file(
   "${CMAKE_SOURCE_DIR}/cmake/compilers.py.in"
   "${CMAKE_SOURCE_DIR}/python/auto/compilers.py" @ONLY)
