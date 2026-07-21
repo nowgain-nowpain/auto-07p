@@ -22,7 +22,9 @@ endif()
 # --- Core engine (produces lib/*.o + lib/libauto_c.a; see src/CMakeLists.txt)
 add_subdirectory(src)
 
-# --- Optional components (each gated until its own CMakeLists.txt lands) -----
+# --- Optional components -----------------------------------------------------
+# demos (W6) and the 3D GUI (plaut04) have CMake support; the 2D GUI (plaut,
+# Motif) is not yet ported -- build it with autotools (make plaut) for now.
 if(BUILD_DEMOS)
   add_subdirectory(demos)
 endif()
