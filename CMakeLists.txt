@@ -23,8 +23,8 @@ endif()
 add_subdirectory(src)
 
 # --- Optional components -----------------------------------------------------
-# demos (W6) and the 3D GUI (plaut04) have CMake support; the 2D GUI (plaut,
-# Motif) is not yet ported -- build it with autotools (make plaut) for now.
+# demos (W6), the 2D plotter (plaut, pure Fortran), and the 3D GUI (plaut04,
+# Qt/Coin3D/SoQt) all have CMake support.
 if(BUILD_DEMOS)
   add_subdirectory(demos)
 endif()
